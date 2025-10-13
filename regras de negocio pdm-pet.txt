@@ -1,0 +1,104 @@
+1. Cadastro e Tipos de Usuário
+
+    RN-U01: Tipos de Conta: Existirão três tipos de contas de usuário:
+
+        Usuário Comum: Qualquer pessoa que queira ajudar a divulgar um cão de rua. Pode postar, comentar e compartilhar.
+
+        Protetor/ONG: Usuários verificados que são protetores independentes ou representam uma ONG. Terão um selo de verificação no perfil e poderão gerenciar múltiplos perfis de cães, além de ter acesso a funcionalidades exclusivas (como gerenciar processos de adoção).
+
+        Adotante: Um usuário que manifesta interesse em adotar. O perfil pode solicitar informações adicionais para facilitar o processo (ex: tipo de moradia, se tem outros animais, etc.).
+
+    RN-U02: Cadastro Simples: O cadastro inicial para um Usuário Comum deve ser simples, exigindo apenas Nome, E-mail, Senha e Cidade/Estado. O acesso via contas Google/Facebook deve ser uma opção.
+
+    RN-U03: Verificação de Protetores/ONGs: Para se tornar um Protetor/ONG, o usuário deverá passar por um processo de verificação manual (enviar documentos, CNPJ da ONG, ou prova de trabalho de proteção animal) para garantir a legitimidade e segurança dos processos de adoção.
+
+    RN-U04: Localização Obrigatória: O aplicativo deve solicitar permissão de acesso à localização do usuário. A geolocalização é essencial para o funcionamento do feed principal (mostrar cães próximos).
+
+2. Cadastro e Perfil do Animal
+
+    RN-C01: Criação do Perfil do Cão: Qualquer usuário logado pode criar um perfil para um cão de rua.
+
+    RN-C02: Informações Essenciais: Ao cadastrar um cão, os seguintes campos são obrigatórios:
+
+        Pelo menos uma foto nítida.
+
+        Localização exata (geotag) onde o cão foi visto. O app deve capturar isso automaticamente.
+
+        Status do Cão: (Ex: "Na Rua", "Em Lar Temporário", "Resgatado por ONG", "Disponível para Adoção", "Adotado").
+
+    RN-C03: Informações Desejáveis (Não obrigatórias):
+
+        Nome Provisório: (Ex: "Caramelo da Praça", "Rex da Padaria").
+
+        Descrição: Comportamento, estado de saúde aparente (magro, machucado, dócil, assustado).
+
+        Características: Porte (pequeno, médio, grande), sexo estimado, idade aproximada.
+
+    RN-C04: Perfil Único por Animal: O sistema deve tentar identificar possíveis duplicatas com base na geolocalização e fotos (desafio técnico, mas uma meta a longo prazo). Inicialmente, os usuários podem sinalizar perfis duplicados.
+
+    RN-C05: Transferência de "Guarda": O usuário que criou o perfil do cão pode "transferir" a responsabilidade do perfil para um Protetor/ONG verificado, que passará a gerenciar o processo de adoção.
+
+3. Funcionalidades do Feed e Interação
+
+    RN-F01: Feed Baseado em Geolocalização: A tela inicial do app (feed) mostrará os cães mais próximos da localização atual do usuário.
+
+    RN-F02: Filtros e Busca: O usuário deve poder filtrar o feed por:
+
+        Proximidade (Raio de X km).
+
+        Status do Cão ("Na Rua", "Para Adoção", etc.).
+
+        Porte, sexo, idade.
+
+        Data da postagem (mais recentes).
+
+    RN-F03: Interações na Publicação: Cada perfil de cão será um "post" onde os usuários podem:
+
+        Curtir/Apoiar: Demonstra engajamento.
+
+        Comentar: Para trocar informações ("Acabei de deixar água para ele", "Ele parece estar mancando").
+
+        Compartilhar: Essencial para a viralização em outras redes sociais.
+
+        Salvar: Para acompanhar a situação de um cão específico.
+
+    RN-F04: Botões de Ação (Call to Action): Cada post terá botões claros:
+
+        "Quero Adotar": Inicia o fluxo de adoção.
+
+        "Oferecer Lar Temporário": Para quem não pode adotar permanentemente.
+
+        "Quero Ajudar": Abre opções como doar ração, remédios ou dinheiro para a pessoa/ONG que está cuidando do cão.
+
+        "Atualizar Informações": Permite que outros usuários que viram o mesmo cão adicionem novas fotos ou atualizem seu status/localização.
+
+4. Processo de Adoção e Ajuda
+
+    RN-A01: Início do Contato: Ao clicar em "Quero Adotar", um chat privado será aberto entre o interessado e o responsável pelo post (o Usuário Comum que postou ou o Protetor/ONG). Nunca exiba informações de contato (telefone, endereço) publicamente.
+
+    RN-A02: Responsabilidade da Adoção: O aplicativo é uma ferramenta de intermediação. A responsabilidade pela entrevista, visita, termo de adoção e checagem do futuro tutor é inteiramente do Protetor/ONG ou, em último caso, do grupo de pessoas da comunidade que está cuidando do cão.
+
+    RN-A03: Questionário de Pré-Adoção: O aplicativo pode oferecer um questionário padrão de pré-adoção que o interessado preenche para agilizar o processo para o protetor.
+
+    RN-A04: Confirmação de Adoção: Após a adoção ser concluída com sucesso, o responsável pelo perfil do cão deve alterar o status para "Adotado!".
+
+    RN-A05: Galeria de Sucesso: Posts de cães "Adotados" irão para uma aba especial de "Finais Felizes" para incentivar e engajar a comunidade.
+
+5. Regras de Segurança e Moderação
+
+    RN-S01: Proibição de Venda: É estritamente proibido vender, negociar ou pedir "taxas de adoção" abusivas. Apenas pedidos de ajuda para cobrir custos veterinários (com comprovação) são permitidos.
+
+    RN-S02: Denúncias: Usuários e publicações devem poder ser denunciados por motivos claros:
+
+        Conteúdo falso ou enganoso.
+
+        Suspeita de maus-tratos no post.
+
+        Tentativa de venda de animais.
+
+        Assédio ou discurso de ódio nos comentários.
+
+    RN-S03: Moderação Ativa: Haverá um painel administrativo para revisar denúncias, banir usuários mal-intencionados e remover conteúdo impróprio.
+
+    RN-S04: Verificação de ONGs (Reforço): O selo de verificação é crucial para dar segurança aos adotantes e garantir que estão lidando com entidades sérias.
+

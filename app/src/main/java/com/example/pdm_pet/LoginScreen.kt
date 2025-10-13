@@ -21,29 +21,28 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Definição das cores para fácil reutilização
+
 val whiteColor = Color.White
-val caramelColor = Color(0xFFC58C5A) // Um tom de caramelo elegante
+val caramelColor = Color(0xFFC58C5A)
 
 @Composable
 fun LoginScreen() {
-    // Estados para armazenar o que o usuário digita.
-    // O "remember" garante que o estado seja mantido quando a tela for redesenhada.
+
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    // Surface é um container que nos permite definir a cor de fundo.
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = whiteColor
     ) {
-        // Column organiza os elementos verticalmente.
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp), // Adiciona margens nas laterais
-            verticalArrangement = Arrangement.Center, // Centraliza tudo na vertical
-            horizontalAlignment = Alignment.CenterHorizontally // Centraliza tudo na horizontal
+                .padding(horizontal = 32.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "Bem-Vindo",
@@ -62,7 +61,6 @@ fun LoginScreen() {
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Campo de texto para o nome de usuário/email
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -86,14 +84,13 @@ fun LoginScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Campo de texto para a senha
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Senha") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                visualTransformation = PasswordVisualTransformation(), // Esconde a senha
+                visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 leadingIcon = {
                     Icon(
@@ -112,7 +109,6 @@ fun LoginScreen() {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Botão de Login
             Button(
                 onClick = { /* Ação de login aqui (não funcional) */ },
                 modifier = Modifier
@@ -126,7 +122,6 @@ fun LoginScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botão de texto para "Esqueceu a senha?"
             TextButton(onClick = { /* Ação aqui */ }) {
                 Text("Esqueceu a senha?", color = caramelColor)
             }
@@ -134,11 +129,8 @@ fun LoginScreen() {
     }
 }
 
-// A anotação @Preview permite visualizar o Composable no painel de design do Android Studio
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun LoginScreenPreview() {
-    // Você pode colocar seu Composable dentro de um tema se tiver um definido
-    // Ex: SuaAppTheme { LoginScreen() }
     LoginScreen()
 }

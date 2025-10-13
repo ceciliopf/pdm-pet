@@ -1,4 +1,4 @@
-package com.example.pdm_pet.ui.theme // O mesmo pacote do Theme.kt
+package com.example.pdm_pet.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
