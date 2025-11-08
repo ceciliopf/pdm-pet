@@ -1,8 +1,6 @@
-package com.example.pdm_pet
+package com.example.pdm_pet.features.auth
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import com.example.pdm_pet.ui.theme.caramelColor
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,8 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
-val whiteColor = Color.White
-val caramelColor = Color(0xFFC58C5A)
 
 @Composable
 fun LoginScreen() {
@@ -34,7 +30,7 @@ fun LoginScreen() {
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = whiteColor
+        color = Color.White
     ) {
 
         Column(
@@ -117,7 +113,7 @@ fun LoginScreen() {
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = caramelColor)
             ) {
-                Text(text = "Entrar", color = whiteColor, fontSize = 18.sp)
+                Text(text = "Entrar", color = Color.White, fontSize = 18.sp)
             }
 
             Spacer(modifier = Modifier.height(16.dp))

@@ -1,6 +1,6 @@
 package com.example.pdm_pet.features.auth
 
-
+import com.example.pdm_pet.ui.theme.caramelColor
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,9 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-val whiteColor = Color.White
-val caramelColor = Color(0xFFC58C5A)
-
 
 @Composable
 fun RegisterScreen(
@@ -32,7 +29,7 @@ fun RegisterScreen(
 ) {
     val uiState = authViewModel.registerUiState
 
-    Surface(modifier = Modifier.fillMaxSize(), color = whiteColor) {
+    Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -126,9 +123,9 @@ fun RegisterScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = caramelColor)
             ) {
                 if (uiState.isLoading) {
-                    CircularProgressIndicator(color = whiteColor, strokeWidth = 3.dp, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp, modifier = Modifier.size(24.dp))
                 } else {
-                    Text(text = "Cadastrar", color = whiteColor, fontSize = 18.sp)
+                    Text(text = "Cadastrar", color = Color.White, fontSize = 18.sp)
                 }
             }
 
