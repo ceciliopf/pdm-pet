@@ -1,6 +1,5 @@
 package com.example.pdm_pet.features.auth
 
-import com.example.pdm_pet.ui.theme.caramelColor
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,11 +20,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-
+import com.example.pdm_pet.ui.theme.caramelColor // Importa sua cor do tema
 
 @Composable
 fun RegisterScreen(
-    authViewModel: AuthViewModel = viewModel()
+    // Recebe o ViewModel e o callback de navegação
+    authViewModel: AuthViewModel = viewModel(),
+    onNavigateToLogin: () -> Unit
 ) {
     val uiState = authViewModel.registerUiState
 
@@ -59,7 +60,7 @@ fun RegisterScreen(
                 value = uiState.name,
                 onValueChange = { authViewModel.onNameChange(it) },
                 label = { Text("Nome Completo") },
-                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = caramelColor) },
+                leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null, tint = caramelColor) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -67,7 +68,7 @@ fun RegisterScreen(
                 value = uiState.email,
                 onValueChange = { authViewModel.onEmailChange(it) },
                 label = { Text("E-mail") },
-                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = caramelColor) },
+                leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null, tint = caramelColor) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -75,7 +76,7 @@ fun RegisterScreen(
                 value = uiState.city,
                 onValueChange = { authViewModel.onCityChange(it) },
                 label = { Text("Cidade") },
-                leadingIcon = { Icon(Icons.Default.LocationCity, contentDescription = null, tint = caramelColor) },
+                leadingIcon = { Icon(Icons.Filled.LocationCity, contentDescription = null, tint = caramelColor) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -83,7 +84,8 @@ fun RegisterScreen(
                 value = uiState.state,
                 onValueChange = { authViewModel.onStateChange(it) },
                 label = { Text("Estado") },
-                leadingIcon = { Icon(Icons.Default.LocationCity, contentDescription = null, tint = caramelColor) },
+                // Você pode usar o mesmo ícone ou um diferente
+                leadingIcon = { Icon(Icons.Filled.LocationCity, contentDescription = null, tint = caramelColor) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -91,7 +93,7 @@ fun RegisterScreen(
                 value = uiState.password,
                 onValueChange = { authViewModel.onRegisterPasswordChange(it) },
                 label = { Text("Senha") },
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = caramelColor) },
+                leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null, tint = caramelColor) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth()
@@ -101,7 +103,7 @@ fun RegisterScreen(
                 value = uiState.confirmPassword,
                 onValueChange = { authViewModel.onConfirmPasswordChange(it) },
                 label = { Text("Confirmar Senha") },
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = caramelColor) },
+                leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null, tint = caramelColor) },
                 isError = uiState.error?.contains("senhas") == true, // Marca erro se as senhas não conferem
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -131,7 +133,8 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            TextButton(onClick = { /* TODO: Navegar para Login */ }) {
+            // Botão de texto para NAVEGAR de volta ao Login
+            TextButton(onClick = { onNavigateToLogin() }) {
                 Text("Já tem uma conta? Entre", color = caramelColor)
             }
         }
@@ -141,5 +144,5 @@ fun RegisterScreen(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun RegisterScreenPreview() {
-    RegisterScreen()
+    RegisterScreen(onNavigateToLogin = {}) // Passa uma função vazia para o preview
 }

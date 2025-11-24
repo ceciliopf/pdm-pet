@@ -1,17 +1,13 @@
 package com.example.pdm_pet.features.auth
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
-// --- IMPORTS QUE FALTAM ---
-import androidx.lifecycle.ViewModel // Para a classe ViewModel (Erro principal)
-import androidx.lifecycle.viewModelScope // Para o .launch { }
-import androidx.compose.runtime.getValue // Para o delegate "by"
-import androidx.compose.runtime.mutableStateOf // Para o estado
-import androidx.compose.runtime.setValue // Para o delegate "by"
-import kotlinx.coroutines.launch // Para o .launch { }
-// -----------------------------
-
-import androidx.compose.runtime.remember // (Este você provavelmente já tinha)
-// --- CÓDIGO DA TELA DE LOGIN (JÁ EXISTENTE) ---
+// --- ESTADO PARA A TELA DE LOGIN ---
 data class LoginUiState(
     val username: String = "",
     val password: String = "",
@@ -19,8 +15,7 @@ data class LoginUiState(
     val error: String? = null
 )
 
-// --- NOVO CÓDIGO PARA A TELA DE CADASTRO ---
-// RN-U02: Estado para os campos de cadastro
+// --- ESTADO PARA A TELA DE CADASTRO ---
 data class RegisterUiState(
     val name: String = "",
     val email: String = "",
@@ -34,14 +29,39 @@ data class RegisterUiState(
 
 class AuthViewModel : ViewModel() {
 
-    // --- ESTADO E LÓGICA DE LOGIN (JÁ EXISTENTE) ---
+    // --- ESTADO E LÓGICA DE LOGIN (O que está faltando) ---
     var loginUiState by mutableStateOf(LoginUiState())
         private set
 
-    // ... (funções onUsernameChange, onPasswordChange, login)
+    fun onUsernameChange(newUsername: String) {
+        loginUiState = loginUiState.copy(username = newUsername)
+    }
+
+    fun onPasswordChange(newPassword: String) {
+        loginUiState = loginUiState.copy(password = newPassword)
+    }
+
+    fun login() {
+        if (loginUiState.isLoading) return
+
+        viewModelScope.launch {
+            loginUiState = loginUiState.copy(isLoading = true)
+            kotlinx.coroutines.delay(2000) // Simula rede
+
+            if (loginUiState.username == "admin" && loginUiState.password == "1234") {
+                loginUiState = loginUiState.copy(isLoading = false, error = null)
+                // TODO: Navegar para o Feed
+            } else {
+                loginUiState = loginUiState.copy(
+                    isLoading = false,
+                    error = "Usuário ou senha inválidos"
+                )
+            }
+        }
+    }
 
 
-    // --- NOVO ESTADO E LÓGICA PARA CADASTRO ---
+    // --- ESTADO E LÓGICA PARA CADASTRO ---
     var registerUiState by mutableStateOf(RegisterUiState())
         private set
 
@@ -67,27 +87,18 @@ class AuthViewModel : ViewModel() {
     fun register() {
         if (registerUiState.isLoading) return
 
-        // Validação simples
         if (registerUiState.password != registerUiState.confirmPassword) {
             registerUiState = registerUiState.copy(error = "As senhas não conferem.")
             return
         }
-        if (registerUiState.name.isBlank() || registerUiState.email.isBlank() || registerUiState.city.isBlank()) {
-            registerUiState = registerUiState.copy(error = "Preencha todos os campos.")
-            return
-        }
+        // ... (outras validações)
 
         viewModelScope.launch {
             registerUiState = registerUiState.copy(isLoading = true, error = null)
-
-            // --- SIMULAÇÃO DE CADASTRO ---
-            // (Aqui entraria a chamada ao Firebase Auth para criar um usuário)
-            kotlinx.coroutines.delay(2000)
-
-            println("Usuário ${registerUiState.name} cadastrado com sucesso!")
+            kotlinx.coroutines.delay(2000) // Simula rede
+            println("Usuário ${registerUiState.name} cadastrado!")
             registerUiState = registerUiState.copy(isLoading = false)
-            // TODO: Navegar para a tela de Feed ou Login
-            // --- FIM DA SIMULAÇÃO ---
+            // TODO: Navegar para Login
         }
     }
 }
