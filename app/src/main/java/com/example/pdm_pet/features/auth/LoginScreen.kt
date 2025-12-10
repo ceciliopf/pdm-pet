@@ -1,158 +1,131 @@
 package com.example.pdm_pet.features.auth
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.pdm_pet.ui.theme.caramelColor // Importa sua cor do tema
+import com.example.pdm_pet.R
+import com.example.pdm_pet.ui.theme.caramelColor
 
 @Composable
 fun LoginScreen(
-    // Recebe o ViewModel e o callback de navegação
-    authViewModel: AuthViewModel = viewModel(),
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    onNavigateToHome: () -> Unit, // Certifique-se que este parâmetro existe!
+    viewModel: AuthViewModel = viewModel()
 ) {
-    // O estado agora vem DIRETAMENTE do ViewModel
-    val uiState = authViewModel.loginUiState
+    val uiState = viewModel.loginUiState
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color.White // Usa a cor padrão do Compose
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 32.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Bem-Vindo",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = caramelColor
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Faça login para continuar",
-                fontSize = 16.sp,
-                color = Color.Gray
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // Campo de texto para o nome de usuário/email
-            OutlinedTextField(
-                value = uiState.username,
-                onValueChange = { authViewModel.onUsernameChange(it) },
-                label = { Text("Usuário ou E-mail") },
-                isError = uiState.error != null,
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Person, // Padrão 'Filled'
-                        contentDescription = "Ícone de usuário",
-                        tint = caramelColor
-                    )
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = caramelColor,
-                    unfocusedBorderColor = Color.Gray,
-                    cursorColor = caramelColor,
-                    focusedLabelColor = caramelColor
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Campo de texto para a senha
-            OutlinedTextField(
-                value = uiState.password,
-                onValueChange = { authViewModel.onPasswordChange(it) },
-                label = { Text("Senha") },
-                isError = uiState.error != null,
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Lock, // Padrão 'Filled'
-                        contentDescription = "Ícone de cadeado",
-                        tint = caramelColor
-                    )
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = caramelColor,
-                    unfocusedBorderColor = Color.Gray,
-                    cursorColor = caramelColor,
-                    focusedLabelColor = caramelColor
-                )
-            )
-
-            // Mostra a mensagem de erro, se existir
-            if (uiState.error != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = uiState.error,
-                    color = Color.Red,
-                    fontSize = 14.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Botão de Login
-            Button(
-                onClick = { authViewModel.login() },
-                enabled = !uiState.isLoading, // Desabilita o botão enquanto carrega
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = caramelColor)
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        strokeWidth = 3.dp,
-                        modifier = Modifier.size(24.dp)
-                    )
-                } else {
-                    Text(text = "Entrar", color = Color.White, fontSize = 18.sp)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Botão de texto para NAVEGAR para Cadastro
-            TextButton(onClick = { onNavigateToRegister() }) {
-                Text("Não tem conta? Cadastre-se", color = caramelColor)
-            }
+    // --- OBSERVADOR DE SUCESSO ---
+    // Assim que 'isSuccess' virar true, este bloco é executado
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onNavigateToHome()
         }
     }
-}
 
-// O Preview precisa de um valor padrão para o callback
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun LoginScreenPreview() {
-    LoginScreen(onNavigateToRegister = {}) // Passa uma função vazia para o preview
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Logotipo (se tiver a imagem no drawable, senão use um Icon)
+        Image(
+            painter = painterResource(id = R.drawable.ic_launcher_foreground), // Substitua pelo seu logo
+            contentDescription = "Logo",
+            modifier = Modifier.size(120.dp),
+            contentScale = ContentScale.Fit
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Text(
+            text = "Bem-vindo de volta!",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = caramelColor
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Campo E-mail
+        OutlinedTextField(
+            value = uiState.username,
+            onValueChange = { viewModel.onUsernameChange(it) },
+            label = { Text("E-mail") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Campo Senha
+        OutlinedTextField(
+            value = uiState.password,
+            onValueChange = { viewModel.onPasswordChange(it) },
+            label = { Text("Senha") },
+            modifier = Modifier.fillMaxWidth(),
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true
+        )
+
+        // Mensagem de Erro
+        if (uiState.error != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = uiState.error,
+                color = Color.Red,
+                fontSize = 14.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Botão Entrar
+        Button(
+            onClick = { viewModel.login() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = caramelColor),
+            enabled = !uiState.isLoading // Desabilita se estiver carregando
+        ) {
+            if (uiState.isLoading) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+            } else {
+                Text("Entrar", fontSize = 18.sp, color = Color.White)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Link para Cadastro
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Não tem conta? ")
+            Text(
+                text = "Cadastre-se",
+                color = caramelColor,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onNavigateToRegister() }
+            )
+        }
+    }
 }
