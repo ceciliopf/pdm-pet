@@ -6,8 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack // Importação corrigida
 import androidx.compose.material.icons.filled.Female
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Male
@@ -28,30 +27,30 @@ import com.example.pdm_pet.ui.theme.caramelColor
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnimalDetailsScreen(
-    animalId: String, // Recebemos o ID do animal vindo da navegação
+    animalId: String,
     onNavigateBack: () -> Unit,
-    viewModel: AnimalDetailsViewModel = viewModel() // Injeção do ViewModel
+    viewModel: AnimalDetailsViewModel = viewModel()
 ) {
-    // 1. Ao entrar na tela (ou se o ID mudar), buscamos os dados na API
+    // Carrega o animal assim que a tela abre
     LaunchedEffect(animalId) {
-        viewModel.loadAnimal(animalId.toLongOrNull() ?: 0L)
+        val id = animalId.toLongOrNull() ?: 0L
+        viewModel.loadAnimal(id)
     }
 
-    // Observamos os estados do ViewModel
     val animal = viewModel.animal
     val isLoading = viewModel.isLoading
+    val errorMsg = viewModel.errorMsg
 
     Scaffold(
         bottomBar = {
-            // Barra fixa no fundo com o botão de ADOTAR
-            // Só mostramos se tiver carregado o animal com sucesso
+            // Só mostra o botão de adotar se carregou com sucesso
             if (!isLoading && animal != null) {
                 BottomAppBar(
                     containerColor = Color.White,
                     tonalElevation = 8.dp
                 ) {
                     Button(
-                        onClick = { /* TODO: Iniciar fluxo de Adoção */ },
+                        onClick = { /* Lógica de adoção aqui */ },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
@@ -65,10 +64,8 @@ fun AnimalDetailsScreen(
             }
         }
     ) { paddingValues ->
-
-        // Lógica de Estado da UI
         if (isLoading) {
-            // TELA DE CARREGAMENTO
+            // --- TELA DE CARREGAMENTO ---
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -78,21 +75,20 @@ fun AnimalDetailsScreen(
                 CircularProgressIndicator(color = caramelColor)
             }
         } else if (animal != null) {
-            // TELA COM DADOS (SUCESSO)
+            // --- TELA DE SUCESSO (MOSTRAR DADOS) ---
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState()) // Permite rolar a tela
+                    .verticalScroll(rememberScrollState())
                     .padding(paddingValues)
             ) {
-                // 1. FOTO GRANDE (Topo)
+                // 1. FOTO
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)
                         .background(Color.LightGray)
                 ) {
-                    // Pega a URL completa da primeira foto
                     val photoUrl = viewModel.getFullImageUrl(animal.photos?.firstOrNull())
 
                     if (photoUrl != null) {
@@ -104,21 +100,25 @@ fun AnimalDetailsScreen(
                         )
                     }
 
-                    // Botão de Voltar sobre a foto
+                    // Botão Voltar
                     IconButton(
                         onClick = onNavigateBack,
                         modifier = Modifier
                             .padding(16.dp)
                             .background(Color.Black.copy(alpha = 0.4f), shape = RoundedCornerShape(50))
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+                        // Ícone atualizado
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Voltar",
+                            tint = Color.White
+                        )
                     }
                 }
 
-                // 2. CONTEÚDO
+                // 2. INFORMAÇÕES
                 Column(modifier = Modifier.padding(24.dp)) {
-
-                    // Cabeçalho (Nome e Sexo)
+                    // Nome e Ícone de Sexo
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -131,7 +131,6 @@ fun AnimalDetailsScreen(
                             color = caramelColor
                         )
 
-                        // Ícone dinâmico baseada no sexo
                         val genderIcon = if (animal.sex == "MALE" || animal.sex == "Macho") {
                             Icons.Default.Male
                         } else {
@@ -148,11 +147,10 @@ fun AnimalDetailsScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Localização (Exemplo estático ou pegando do objeto se tiver endereço)
+                    // Localização / Distância
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.Gray)
                         Spacer(modifier = Modifier.width(4.dp))
-                        // Se quiser calcular distância real, precisaria da lat/long do usuário aqui
                         Text(
                             text = "Aprox. ${animal.approximateDistance ?: "?"} km",
                             fontSize = 16.sp,
@@ -162,11 +160,11 @@ fun AnimalDetailsScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Sobre
+                    // Descrição
                     Text("Sobre", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = animal.description ?: "Nenhuma descrição fornecida.",
+                        text = animal.description ?: "Sem descrição.",
                         fontSize = 16.sp,
                         lineHeight = 24.sp,
                         color = Color.DarkGray
@@ -174,17 +172,19 @@ fun AnimalDetailsScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Detalhes (Chips)
+                    // Cards de Detalhes
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         InfoCard(label = "Idade", value = animal.approximateAge ?: "?")
                         InfoCard(label = "Porte", value = animal.size ?: "?")
-                        // Tradução simples do status
-                        val statusDisplay = when(animal.status) {
+
+                        // Traduz o status para exibir bonito
+                        val statusDisplay = when (animal.status) {
                             "ON_STREET" -> "Na Rua"
                             "AVAILABLE_FOR_ADOPTION" -> "Para Adoção"
+                            "TEMP_HOME" -> "Lar Temp."
                             "ADOPTED" -> "Adotado"
                             else -> animal.status ?: "?"
                         }
@@ -193,7 +193,7 @@ fun AnimalDetailsScreen(
                 }
             }
         } else {
-            // TELA DE ERRO (Não encontrou ou falhou)
+            // --- TELA DE ERRO ---
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -201,8 +201,23 @@ fun AnimalDetailsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Não foi possível carregar os detalhes.", color = Color.Gray)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.Male, // Pode usar um icone de alerta se quiser
+                        contentDescription = "Erro",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // AQUI MOSTRAMOS O MOTIVO DO ERRO:
+                    Text(
+                        text = errorMsg ?: "Não foi possível carregar os detalhes.",
+                        color = Color.Red,
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
                     Button(onClick = onNavigateBack) {
                         Text("Voltar")
                     }
@@ -212,7 +227,6 @@ fun AnimalDetailsScreen(
     }
 }
 
-// Componente auxiliar pequeno para mostrar infos (Idade, Porte)
 @Composable
 fun InfoCard(label: String, value: String) {
     Card(
@@ -228,7 +242,7 @@ fun InfoCard(label: String, value: String) {
                 text = value,
                 fontWeight = FontWeight.Bold,
                 color = caramelColor,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 maxLines = 1
             )
             Text(label, fontSize = 12.sp, color = Color.Gray)

@@ -6,24 +6,29 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
+
 interface PatasUnidasApi {
 
-    // --- USER CONTROLLER ---
-
+    // --- USER ---
     @POST("/user/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     @POST("/user/register-new-user")
     suspend fun register(@Body request: RegisterRequest): Response<Void>
 
-    // --- ANIMAL PROFILE CONTROLLER ---
+    // --- ANIMAL ---
     @POST("/animalprofile/register-animal-profile")
     suspend fun createAnimal(@Body request: CreateAnimalRequest): Response<Void>
-    // (Vamos adicionar os de Animal depois que o login funcionar)
 
     @GET("/animalprofile/{id}")
     suspend fun getAnimalById(@Path("id") id: Long): Response<AnimalResponse>
 
-    @GET("/animalprofile/get-recent")
-    suspend fun getRecentAnimals(): Response<List<AnimalResponse>>
+    // Endpoint atualizado para "/proximos" conforme solicitado
+    @GET("/animalprofile/proximos")
+    suspend fun getNearbyAnimals(
+        @Query("latitude") latitude: Double,
+        @Query("longitude") longitude: Double,
+        @Query("radius") radius: Double = 20.0
+    ): Response<List<AnimalResponse>>
 }
