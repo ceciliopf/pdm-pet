@@ -1,5 +1,6 @@
 package com.example.pdm_pet.features.auth
-
+import com.example.pdm_pet.data.remote.RetrofitClient
+import com.example.pdm_pet.data.remote.dto.LoginRequest
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -45,16 +46,42 @@ class AuthViewModel : ViewModel() {
         if (loginUiState.isLoading) return
 
         viewModelScope.launch {
-            loginUiState = loginUiState.copy(isLoading = true)
-            kotlinx.coroutines.delay(2000) // Simula rede
+            loginUiState = loginUiState.copy(isLoading = true, error = null)
 
-            if (loginUiState.username == "admin" && loginUiState.password == "1234") {
-                loginUiState = loginUiState.copy(isLoading = false, error = null)
-                // TODO: Navegar para o Feed
-            } else {
+            try {
+                // 1. Criar o objeto de requisição
+                val request = LoginRequest(
+                    email = loginUiState.username,
+                    senha = loginUiState.password
+                )
+
+                // 2. Chamar sua API Spring Boot
+                val response = RetrofitClient.api.login(request)
+
+                if (response.isSuccessful && response.body() != null) {
+                    val authData = response.body()!!
+                    println("Login Sucesso! Token: ${authData.token}")
+
+                    // DICA: Aqui você deveria salvar o authData.token num Singleton
+                    // ou SharedPreferences para usar nas próximas chamadas.
+                    // TokenManager.saveToken(authData.token)
+
+                    loginUiState = loginUiState.copy(isLoading = false, error = null)
+                    // TODO: Disparar navegação para o Feed (onLoginSuccess)
+
+                } else {
+                    // Erro 403, 404, 500...
+                    loginUiState = loginUiState.copy(
+                        isLoading = false,
+                        error = "Erro no login: Código ${response.code()}"
+                    )
+                }
+
+            } catch (e: Exception) {
+                // Erro de conexão (servidor desligado, sem internet)
                 loginUiState = loginUiState.copy(
                     isLoading = false,
-                    error = "Usuário ou senha inválidos"
+                    error = "Falha na conexão: ${e.message}"
                 )
             }
         }
