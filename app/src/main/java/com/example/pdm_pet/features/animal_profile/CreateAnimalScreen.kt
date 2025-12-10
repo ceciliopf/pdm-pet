@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -39,39 +40,65 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// --- FUNÇÃO UTILITÁRIA PARA CONVERSÃO (Bitmap -> Base64) ---
+// --- FUNÇÕES UTILITÁRIAS ---
 fun bitmapToBase64(bitmap: Bitmap): String {
     val byteArrayOutputStream = ByteArrayOutputStream()
-    // Comprime para JPEG com qualidade 70% para reduzir o tamanho da string final
     bitmap.compress(Bitmap.CompressFormat.JPEG, 70, byteArrayOutputStream)
     val byteArray = byteArrayOutputStream.toByteArray()
-
-    // Retorna a String Base64 sem quebras de linha (NO_WRAP)
     return Base64.encodeToString(byteArray, Base64.NO_WRAP)
 }
 
-// --- FUNÇÃO AUXILIAR PARA CRIAR ARQUIVO TEMPORÁRIO DA CÂMERA ---
 fun createImageFile(context: Context): Uri {
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val storageDir = context.externalCacheDir
-    val file = File.createTempFile(
-        "JPEG_${timeStamp}_",
-        ".jpg",
-        storageDir
-    )
-    // ATENÇÃO: A string abaixo deve ser igual ao 'authorities' definido no AndroidManifest.xml
-    return FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.fileprovider",
-        file
-    )
+    val file = File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+}
+
+// --- COMPONENTE DROPDOWN REUTILIZÁVEL ---
+@Composable
+fun SimpleDropdown(
+    label: String,
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = selectedOption,
+            onValueChange = {},
+            label = { Text(label) },
+            readOnly = true,
+            trailingIcon = {
+                IconButton(onClick = { expanded = !expanded }) {
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir")
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onOptionSelected(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateAnimalScreen(
     onNavigateBack: () -> Unit,
-    // Injeção do ViewModel
     viewModel: CreateAnimalViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -79,56 +106,55 @@ fun CreateAnimalScreen(
     // --- ESTADOS DO FORMULÁRIO ---
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var locationReference by remember { mutableStateOf("") }
+    var age by remember { mutableStateOf("") }
+
+    // Estados para os Dropdowns (Valores visíveis vs Valores para API)
+    var selectedSex by remember { mutableStateOf("Desconhecido") }
+    val sexOptions = listOf("Macho" to "MALE", "Fêmea" to "FEMALE", "Desconhecido" to "UNKNOWN")
+
+    var selectedSize by remember { mutableStateOf("Médio") }
+    val sizeOptions = listOf("Pequeno" to "SMALL", "Médio" to "MEDIUM", "Grande" to "LARGE")
+
+    var selectedStatus by remember { mutableStateOf("Na Rua") }
+    val statusOptions = listOf(
+        "Na Rua" to "ON_STREET",
+        "Lar Temporário" to "TEMP_HOME",
+        "Para Adoção" to "AVAILABLE_FOR_ADOPTION"
+    )
 
     // --- ESTADOS DA IMAGEM ---
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
-
-    // Controle do Dialog "Câmera ou Galeria?"
     var showImageSourceDialog by remember { mutableStateOf(false) }
-
-    // Variável para guardar o caminho da foto que a câmera vai tirar
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
-    // --- LAUNCHERS (INTENTS) ---
-
-    // 1. Galeria
+    // --- LAUNCHERS ---
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        // Se o usuário cancelou, uri vem null
         uri?.let {
             photoUri = it
-            // Converte URI da galeria para Bitmap
             photoBitmap = if (Build.VERSION.SDK_INT < 28) {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
+                @Suppress("DEPRECATION") MediaStore.Images.Media.getBitmap(context.contentResolver, it)
             } else {
-                val source = ImageDecoder.createSource(context.contentResolver, it)
-                ImageDecoder.decodeBitmap(source)
+                ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it))
             }
         }
     }
 
-    // 2. Câmera
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success && tempCameraUri != null) {
             photoUri = tempCameraUri
-            // Converte URI do arquivo temporário para Bitmap
             photoBitmap = if (Build.VERSION.SDK_INT < 28) {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(context.contentResolver, tempCameraUri!!)
+                @Suppress("DEPRECATION") MediaStore.Images.Media.getBitmap(context.contentResolver, tempCameraUri!!)
             } else {
-                val source = ImageDecoder.createSource(context.contentResolver, tempCameraUri!!)
-                ImageDecoder.decodeBitmap(source)
+                ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, tempCameraUri!!))
             }
         }
     }
 
-    // --- UI (SCAFFOLD) ---
     Scaffold(
         topBar = {
             TopAppBar(
@@ -138,14 +164,10 @@ fun CreateAnimalScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         }
     ) { paddingValues ->
-
-        // CONTEÚDO COM SCROLL
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -154,37 +176,26 @@ fun CreateAnimalScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            // 1. ÁREA DA FOTO (CLICÁVEL)
+            // ÁREA DA FOTO
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color.LightGray)
-                    .clickable {
-                        // Abre o Dialog para escolher
-                        showImageSourceDialog = true
-                    },
+                    .clickable { showImageSourceDialog = true },
                 contentAlignment = Alignment.Center
             ) {
                 if (photoUri != null) {
-                    // Exibe a foto selecionada/tirada
                     AsyncImage(
                         model = photoUri,
-                        contentDescription = "Foto do animal",
+                        contentDescription = "Foto",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    // Placeholder
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.CameraAlt,
-                            contentDescription = "Adicionar Foto",
-                            modifier = Modifier.size(48.dp),
-                            tint = Color.DarkGray
-                        )
+                        Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.DarkGray)
                         Text("Toque para adicionar foto", color = Color.DarkGray)
                     }
                 }
@@ -192,117 +203,92 @@ fun CreateAnimalScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 2. CAMPOS DE TEXTO
+            // CAMPOS
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Nome (ou apelido)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                value = name, onValueChange = { name = it },
+                label = { Text("Nome Provisório") }, modifier = Modifier.fillMaxWidth()
             )
-
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("Descrição (saúde, comportamento)") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3,
-                maxLines = 5
+                value = description, onValueChange = { description = it },
+                label = { Text("Descrição e Referência") }, modifier = Modifier.fillMaxWidth(), minLines = 3
             )
-
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = locationReference,
-                onValueChange = { locationReference = it },
-                label = { Text("Ponto de Referência") },
-                modifier = Modifier.fillMaxWidth()
+                value = age, onValueChange = { age = it },
+                label = { Text("Idade Aproximada (ex: 2 anos)") }, modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // DROPDOWNS
+            SimpleDropdown("Sexo", sexOptions.map { it.first }, selectedSex) { selectedSex = it }
+            Spacer(modifier = Modifier.height(16.dp))
+            SimpleDropdown("Porte", sizeOptions.map { it.first }, selectedSize) { selectedSize = it }
+            Spacer(modifier = Modifier.height(16.dp))
+            SimpleDropdown("Status", statusOptions.map { it.first }, selectedStatus) { selectedStatus = it }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // EXIBIR MENSAGEM DE ERRO (SE HOUVER)
             if (viewModel.errorMessage != null) {
-                Text(
-                    text = viewModel.errorMessage!!,
-                    color = Color.Red,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                Text(viewModel.errorMessage!!, color = Color.Red, fontSize = 14.sp)
             }
 
-            // 3. BOTÃO SALVAR
+            // BOTÃO SALVAR
             Button(
                 onClick = {
-                    // Prepara a lista de fotos (Base64)
                     val photosList = ArrayList<String>()
+                    photoBitmap?.let { photosList.add(bitmapToBase64(it)) }
 
-                    photoBitmap?.let { bitmap ->
-                        val base64String = bitmapToBase64(bitmap)
-                        photosList.add(base64String)
-                    }
+                    // Converte os valores visuais de volta para ENUMS da API
+                    val apiSex = sexOptions.find { it.first == selectedSex }?.second ?: "UNKNOWN"
+                    val apiSize = sizeOptions.find { it.first == selectedSize }?.second ?: "MEDIUM"
+                    val apiStatus = statusOptions.find { it.first == selectedStatus }?.second ?: "ON_STREET"
 
-                    // Chama o ViewModel
                     viewModel.createAnimal(
                         name = name,
-                        description = "$description (Ref: $locationReference)",
+                        description = description,
+                        age = age,
                         photos = photosList,
-                        onSuccess = {
-                            onNavigateBack() // Volta para o Feed
-                        }
+                        sex = apiSex,
+                        size = apiSize,
+                        status = apiStatus,
+                        onSuccess = { onNavigateBack() }
                     )
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = caramelColor),
-                enabled = !viewModel.isLoading // Evita duplo clique
+                enabled = !viewModel.isLoading
             ) {
                 if (viewModel.isLoading) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
-                    )
+                    CircularProgressIndicator(color = Color.White)
                 } else {
-                    Text("Salvar Pet", color = Color.White, fontSize = 18.sp)
+                    Text("Salvar Pet", color = Color.White)
                 }
             }
         }
     }
 
-    // --- DIALOG DE ESCOLHA (CÂMERA OU GALERIA) ---
     if (showImageSourceDialog) {
         AlertDialog(
             onDismissRequest = { showImageSourceDialog = false },
             title = { Text("Escolher Foto") },
-            text = { Text("Selecione a origem da imagem:") },
+            text = { Text("Selecione a origem:") },
             confirmButton = {
                 TextButton(onClick = {
                     showImageSourceDialog = false
-                    // Lógica para CÂMERA
-                    try {
-                        val uri = createImageFile(context)
-                        tempCameraUri = uri // Guarda a URI para ler depois
-                        cameraLauncher.launch(uri)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }) {
-                    Text("Câmera")
-                }
+                    val uri = createImageFile(context)
+                    tempCameraUri = uri
+                    cameraLauncher.launch(uri)
+                }) { Text("Câmera") }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showImageSourceDialog = false
-                    // Lógica para GALERIA
                     galleryLauncher.launch("image/*")
-                }) {
-                    Text("Galeria")
-                }
+                }) { Text("Galeria") }
             }
         )
     }

@@ -1,16 +1,19 @@
 package com.example.pdm_pet.data.remote.dto
 
-// ... (CreateAnimalRequest que já criamos antes)
-
-// NOVO: O que recebemos ao buscar animais
-data class AnimalResponse(
-    val id: Long,
+data class CreateAnimalRequest(
     val provisionalName: String,
-    val description: String?, // Pode vir nulo do banco
-    val photos: List<String>?, // Lista de nomes de arquivos (ex: "abc-123.jpg")
-    val status: String, // "ON_STREET", etc.
-    val sex: String,    // "MALE", "FEMALE"
-    val city: String? = "Uberaba", // O backend ainda não manda cidade no DTO de animal, deixei fixo ou null
-    val state: String? = "MG",
-    val approximateDistance: Double? // Calculado pelo backend
+    val description: String,
+    val photos: List<String>,
+    val createdByUserId: Long,
+    val latitude: Double,
+    val longitude: Double,
+    // Novos campos que faltavam:
+    val status: String,
+    val size: String,
+    val sex: String,
+    val approximateAge: String,
+    // CORREÇÃO CRÍTICA: Data obrigatória no banco
+    val createdAt: Long = System.currentTimeMillis()
 )
+
+// ... (Mantenha o AnimalResponse se houver)
