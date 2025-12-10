@@ -1,14 +1,13 @@
 package com.example.pdm_pet.features.auth
 import android.app.Application
-import android.content.Context
-import com.example.pdm_pet.data.remote.RetrofitClient
-import com.example.pdm_pet.data.remote.dto.LoginRequest
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pdm_pet.data.remote.RetrofitClient
+import com.example.pdm_pet.data.remote.dto.LoginRequest
+import com.example.pdm_pet.data.remote.dto.RegisterRequest
 import com.example.pdm_pet.utils.TokenManager
 import kotlinx.coroutines.launch
 
@@ -122,7 +121,42 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             registerUiState = registerUiState.copy(error = "As senhas não conferem.")
             return
         }
-        // ... (outras validações)
+
+        viewModelScope.launch {
+            registerUiState = registerUiState.copy(isLoading = true, error = null)
+
+            try {
+                // 1. Cria a requisição (Resolve o aviso de DTO não usado)
+                val request = RegisterRequest(
+                    name = registerUiState.name,
+                    email = registerUiState.email,
+                    senha = registerUiState.password,
+                    city = registerUiState.city,
+                    state = registerUiState.state,
+                    userType = "COMMON" // Valor padrão
+                )
+
+                // 2. Chama a API (Resolve o aviso de função não usada na Api)
+                val response = RetrofitClient.api.register(request)
+
+                if (response.isSuccessful) {
+                    println("Usuário cadastrado com sucesso!")
+                    registerUiState = registerUiState.copy(isLoading = false)
+                    // Aqui você pode disparar um evento para navegar ao Login
+                } else {
+                    registerUiState = registerUiState.copy(
+                        isLoading = false,
+                        error = "Erro no cadastro: ${response.code()}"
+                    )
+                }
+            } catch (e: Exception) {
+                registerUiState = registerUiState.copy(
+                    isLoading = false,
+                    error = "Falha na conexão: ${e.message}"
+                )
+            }
+        }
+
 
         viewModelScope.launch {
             registerUiState = registerUiState.copy(isLoading = true, error = null)
