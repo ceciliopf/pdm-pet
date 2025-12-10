@@ -5,7 +5,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
-
+import retrofit2.http.Path
 interface PatasUnidasApi {
 
     // --- USER CONTROLLER ---
@@ -21,7 +21,9 @@ interface PatasUnidasApi {
     suspend fun createAnimal(@Body request: CreateAnimalRequest): Response<Void>
     // (Vamos adicionar os de Animal depois que o login funcionar)
 
-    // NOVO: Busca os animais recentes
+    @GET("/animalprofile/{id}")
+    suspend fun getAnimalById(@Path("id") id: Long): Response<AnimalResponse>
+
     @GET("/animalprofile/get-recent")
     suspend fun getRecentAnimals(): Response<List<AnimalResponse>>
 }

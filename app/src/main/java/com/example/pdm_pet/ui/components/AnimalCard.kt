@@ -27,7 +27,7 @@ fun AnimalCard(
     description: String,
     photoUrl: String?, // NOVO: URL da imagem vinda do Backend
     location: String,
-    status: String,
+    status: String?,
     gender: String,
     onAdoptClick: () -> Unit
 ) {
@@ -68,7 +68,11 @@ fun AnimalCard(
                 // Badge de Status (ex: "Na Rua") sobre a foto
                 AssistChip(
                     onClick = { },
-                    label = { Text(status, fontWeight = FontWeight.Bold) },
+                    label = {
+                        if (status != null) {
+                            Text(status, fontWeight = FontWeight.Bold)
+                        }
+                    },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp),

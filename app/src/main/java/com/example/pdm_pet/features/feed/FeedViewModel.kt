@@ -12,7 +12,7 @@ data class AnimalUiState(
     val name: String,
     val description: String,
     val photoUrl: String?, // Agora é a URL completa da internet
-    val status: String,
+    val status: String?,
     val gender: String,
     val distance: String
 )
