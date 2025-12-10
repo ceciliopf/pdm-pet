@@ -11,6 +11,8 @@ import com.example.pdm_pet.features.animal_profile.CreateAnimalScreen
 import com.example.pdm_pet.features.auth.LoginScreen
 import com.example.pdm_pet.features.auth.RegisterScreen
 import com.example.pdm_pet.features.feed.FeedScreen
+import com.example.pdm_pet.features.profile.ProfileScreen
+import com.example.pdm_pet.utils.UserSession
 
 @Composable
 fun AppNavigationGraph() {
@@ -25,7 +27,7 @@ fun AppNavigationGraph() {
                     navController.navigate("register")
                 },
                 onNavigateToHome = {
-                    // Navega para o Feed e remove o Login da pilha (BackStack)
+                    // Vai para o Feed e remove o Login da pilha (para não voltar ao login se apertar 'Voltar')
                     navController.navigate("feed") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -33,10 +35,11 @@ fun AppNavigationGraph() {
             )
         }
 
-        // --- TELA DE CADASTRO (USUÁRIO) ---
+        // --- TELA DE CADASTRO ---
         composable("register") {
             RegisterScreen(
                 onNavigateToLogin = {
+                    // Volta para a tela anterior (Login)
                     navController.popBackStack()
                 }
             )
@@ -50,6 +53,25 @@ fun AppNavigationGraph() {
                 },
                 onNavigateToDetails = { animalId ->
                     navController.navigate("details/$animalId")
+                },
+                onNavigateToProfile = {
+                    navController.navigate("profile")
+                }
+            )
+        }
+
+        // --- TELA DE PERFIL ---
+        composable("profile") {
+            ProfileScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onLogout = {
+                    UserSession.logout() // Limpa o token da sessão
+                    // Volta para o Login e limpa toda a pilha de telas
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
@@ -68,9 +90,7 @@ fun AppNavigationGraph() {
             route = "details/{animalId}",
             arguments = listOf(navArgument("animalId") { type = NavType.StringType })
         ) { backStackEntry ->
-            // Recupera o ID passado na rota
             val animalId = backStackEntry.arguments?.getString("animalId") ?: "0"
-
             AnimalDetailsScreen(
                 animalId = animalId,
                 onNavigateBack = {

@@ -47,7 +47,7 @@ fun LoginScreen(
     ) {
         // Logotipo (se tiver a imagem no drawable, senão use um Icon)
         Image(
-            painter = painterResource(id = R.drawable.ic_launcher_foreground), // Substitua pelo seu logo
+            painter = painterResource(id = R.drawable.patasun_background), // Substitua pelo seu logo
             contentDescription = "Logo",
             modifier = Modifier.size(120.dp),
             contentScale = ContentScale.Fit

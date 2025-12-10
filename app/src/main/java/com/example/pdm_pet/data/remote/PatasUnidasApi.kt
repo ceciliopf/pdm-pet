@@ -39,4 +39,20 @@ interface PatasUnidasApi {
         @Query("longitude") longitude: Double,
         @Query("radius") radius: Double = 20.0
     ): Response<List<AnimalResponse>>
+
+    // Busca dados do próprio usuário logado
+    @GET("/user/{id}")
+    suspend fun getUserDetails(@Path("id") id: Long): Response<UserResponse>
+
+    // Atualizar foto de perfil
+    @POST("/user/{id}/update-photo") // Ou PUT, dependendo do seu backend
+    suspend fun updateUserPhoto(
+        @Path("id") id: Long,
+        @Body request: UpdatePhotoRequest
+    ): Response<Void>
+
+    // Remover foto de perfil
+    @POST("/user/{id}/remove-photo") // Ou DELETE
+    suspend fun deleteUserPhoto(@Path("id") id: Long): Response<Void>
+
 }

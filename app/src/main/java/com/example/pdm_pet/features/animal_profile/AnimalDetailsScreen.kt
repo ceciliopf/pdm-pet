@@ -151,7 +151,7 @@ fun AnimalDetailsScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
 
                                 Column {
-                                    Text(creator.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                    creator.name?.let { Text(it, fontWeight = FontWeight.Bold, fontSize = 16.sp) }
                                     Text("${creator.city ?: "?"} - ${creator.state ?: "?"}", fontSize = 12.sp, color = Color.DarkGray)
                                 }
                             }
