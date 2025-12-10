@@ -17,6 +17,7 @@ interface PatasUnidasApi {
     suspend fun register(@Body request: RegisterRequest): Response<Void>
 
     // --- ANIMAL PROFILE CONTROLLER ---
-
+    @POST("/animalprofile/register-animal-profile")
+    suspend fun createAnimal(@Body request: CreateAnimalRequest): Response<Void>
     // (Vamos adicionar os de Animal depois que o login funcionar)
 }

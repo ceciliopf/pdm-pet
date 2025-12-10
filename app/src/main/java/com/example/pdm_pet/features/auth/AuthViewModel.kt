@@ -1,11 +1,15 @@
 package com.example.pdm_pet.features.auth
+import android.app.Application
+import android.content.Context
 import com.example.pdm_pet.data.remote.RetrofitClient
 import com.example.pdm_pet.data.remote.dto.LoginRequest
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pdm_pet.utils.TokenManager
 import kotlinx.coroutines.launch
 
 // --- ESTADO PARA A TELA DE LOGIN ---
@@ -28,7 +32,7 @@ data class RegisterUiState(
     val error: String? = null
 )
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- ESTADO E LÓGICA DE LOGIN (O que está faltando) ---
     var loginUiState by mutableStateOf(LoginUiState())
@@ -62,10 +66,10 @@ class AuthViewModel : ViewModel() {
                     val authData = response.body()!!
                     println("Login Sucesso! Token: ${authData.token}")
 
-                    // DICA: Aqui você deveria salvar o authData.token num Singleton
-                    // ou SharedPreferences para usar nas próximas chamadas.
-                    // TokenManager.saveToken(authData.token)
+                    TokenManager.saveToken(context = getApplication(), token = authData.token)
 
+                    // 2. Log para confirmar (opcional)
+                    println("Login Sucesso: Token salvo!")
                     loginUiState = loginUiState.copy(isLoading = false, error = null)
                     // TODO: Disparar navegação para o Feed (onLoginSuccess)
 
