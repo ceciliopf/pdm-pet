@@ -16,4 +16,19 @@ data class CreateAnimalRequest(
     val createdAt: Long = System.currentTimeMillis()
 )
 
-// ... (Mantenha o AnimalResponse se houver)
+data class AnimalResponse(
+    val id: Long,
+    val createdByUserId: Long,
+    val managedByUserId: Long,
+    val photos: List<String>?, // Backend manda uma lista de nomes de arquivos
+    val latitude: Double?,
+    val longitude: Double?,
+    val status: String?,       // Ex: "ON_STREET"
+    val createdAt: Long?,
+    val provisionalName: String, // Nome provisório
+    val description: String?,
+    val size: String?,         // Ex: "MEDIUM"
+    val sex: String?,          // Ex: "MALE"
+    val approximateAge: String?,
+    val approximateDistance: Double? // Calculado pelo backend se passar lat/long
+)
