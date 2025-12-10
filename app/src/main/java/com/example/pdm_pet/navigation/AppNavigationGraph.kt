@@ -30,7 +30,7 @@ fun AppNavigationGraph() {
     NavHost(
         navController = navController,
 
-        startDestination = AppRoutes.FEED
+        startDestination = AppRoutes.LOGIN
     ) {
 
         // --- TELA DE LOGIN ---
