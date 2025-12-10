@@ -3,20 +3,24 @@ package com.example.pdm_pet.features.animal_profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack // Importação corrigida
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Female
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Male
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,30 +35,26 @@ fun AnimalDetailsScreen(
     onNavigateBack: () -> Unit,
     viewModel: AnimalDetailsViewModel = viewModel()
 ) {
-    // Carrega o animal assim que a tela abre
+    val context = LocalContext.current
+
     LaunchedEffect(animalId) {
         val id = animalId.toLongOrNull() ?: 0L
-        viewModel.loadAnimal(id)
+        // Passamos o contexto para o ViewModel pegar o GPS
+        viewModel.loadAnimal(context, id)
     }
 
     val animal = viewModel.animal
+    val creator = viewModel.creatorUser // Dados do dono do post
     val isLoading = viewModel.isLoading
     val errorMsg = viewModel.errorMsg
 
     Scaffold(
         bottomBar = {
-            // Só mostra o botão de adotar se carregou com sucesso
             if (!isLoading && animal != null) {
-                BottomAppBar(
-                    containerColor = Color.White,
-                    tonalElevation = 8.dp
-                ) {
+                BottomAppBar(containerColor = Color.White, tonalElevation = 8.dp) {
                     Button(
-                        onClick = { /* Lógica de adoção aqui */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                            .height(50.dp),
+                        onClick = { /* Lógica de adoção */ },
+                        modifier = Modifier.fillMaxWidth().padding(16.dp).height(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = caramelColor),
                         shape = RoundedCornerShape(8.dp)
                     ) {
@@ -65,168 +65,129 @@ fun AnimalDetailsScreen(
         }
     ) { paddingValues ->
         if (isLoading) {
-            // --- TELA DE CARREGAMENTO ---
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = caramelColor)
             }
         } else if (animal != null) {
-            // --- TELA DE SUCESSO (MOSTRAR DADOS) ---
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(paddingValues)
             ) {
-                // 1. FOTO
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                        .background(Color.LightGray)
-                ) {
+                // --- FOTO DO ANIMAL ---
+                Box(modifier = Modifier.fillMaxWidth().height(300.dp).background(Color.LightGray)) {
                     val photoUrl = viewModel.getFullImageUrl(animal.photos?.firstOrNull())
-
                     if (photoUrl != null) {
-                        AsyncImage(
-                            model = photoUrl,
-                            contentDescription = "Foto do animal",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
+                        AsyncImage(model = photoUrl, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                     }
-
-                    // Botão Voltar
                     IconButton(
                         onClick = onNavigateBack,
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .background(Color.Black.copy(alpha = 0.4f), shape = RoundedCornerShape(50))
+                        modifier = Modifier.padding(16.dp).background(Color.Black.copy(alpha = 0.4f), shape = RoundedCornerShape(50))
                     ) {
-                        // Ícone atualizado
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar",
-                            tint = Color.White
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = Color.White)
                     }
                 }
 
-                // 2. INFORMAÇÕES
                 Column(modifier = Modifier.padding(24.dp)) {
-                    // Nome e Ícone de Sexo
+                    // --- TÍTULO E GÊNERO ---
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = animal.provisionalName,
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = caramelColor
-                        )
-
-                        val genderIcon = if (animal.sex == "MALE" || animal.sex == "Macho") {
-                            Icons.Default.Male
-                        } else {
-                            Icons.Default.Female
-                        }
-
-                        Icon(
-                            imageVector = genderIcon,
-                            contentDescription = null,
-                            modifier = Modifier.size(32.dp),
-                            tint = Color.Gray
-                        )
+                        Text(animal.provisionalName, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = caramelColor)
+                        val genderIcon = if (animal.sex == "MALE") Icons.Default.Male else Icons.Default.Female
+                        Icon(genderIcon, null, modifier = Modifier.size(32.dp), tint = Color.Gray)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Localização / Distância
+                    // --- LOCALIZAÇÃO E PROXIMIDADE ---
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.Gray)
+                        Icon(Icons.Default.LocationOn, null, tint = Color.Gray)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Aprox. ${animal.approximateDistance ?: "?"} km",
-                            fontSize = 16.sp,
-                            color = Color.Gray
-                        )
+
+                        // Exibição da Distância
+                        val distText = if (animal.approximateDistance != null)
+                            "Aprox. %.1f km de você".format(animal.approximateDistance)
+                        else "Distância desconhecida"
+
+                        Text(distText, fontSize = 16.sp, color = Color.Gray)
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Descrição
+                    // --- CARD DO CRIADOR (QUEM POSTOU) ---
+                    if (creator != null) {
+                        Text("Publicado por", fontSize = 14.sp, color = Color.Gray, fontWeight = FontWeight.SemiBold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Foto do Usuário
+                                val userImgUrl = viewModel.getUserImageUrl(creator.profilePictureUrl)
+                                if (userImgUrl != null) {
+                                    AsyncImage(
+                                        model = userImgUrl,
+                                        contentDescription = "Foto do usuário",
+                                        modifier = Modifier.size(50.dp).clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(50.dp).background(Color.Gray, CircleShape).padding(8.dp),
+                                        tint = Color.White
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Column {
+                                    Text(creator.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                    Text("${creator.city ?: "?"} - ${creator.state ?: "?"}", fontSize = 12.sp, color = Color.DarkGray)
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+
+                    // --- SOBRE ---
                     Text("Sobre", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = animal.description ?: "Sem descrição.",
-                        fontSize = 16.sp,
-                        lineHeight = 24.sp,
-                        color = Color.DarkGray
-                    )
+                    Text(animal.description ?: "Sem descrição.", fontSize = 16.sp, lineHeight = 24.sp, color = Color.DarkGray)
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Cards de Detalhes
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        InfoCard(label = "Idade", value = animal.approximateAge ?: "?")
-                        InfoCard(label = "Porte", value = animal.size ?: "?")
-
-                        // Traduz o status para exibir bonito
+                    // --- DETALHES ---
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        InfoCard("Idade", animal.approximateAge ?: "?")
+                        InfoCard("Porte", animal.size ?: "?")
                         val statusDisplay = when (animal.status) {
                             "ON_STREET" -> "Na Rua"
                             "AVAILABLE_FOR_ADOPTION" -> "Para Adoção"
-                            "TEMP_HOME" -> "Lar Temp."
-                            "ADOPTED" -> "Adotado"
                             else -> animal.status ?: "?"
                         }
-                        InfoCard(label = "Status", value = statusDisplay)
+                        InfoCard("Status", statusDisplay)
                     }
                 }
             }
         } else {
-            // --- TELA DE ERRO ---
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Male, // Pode usar um icone de alerta se quiser
-                        contentDescription = "Erro",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // AQUI MOSTRAMOS O MOTIVO DO ERRO:
-                    Text(
-                        text = errorMsg ?: "Não foi possível carregar os detalhes.",
-                        color = Color.Red,
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(horizontal = 32.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Button(onClick = onNavigateBack) {
-                        Text("Voltar")
-                    }
-                }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(errorMsg ?: "Erro desconhecido", color = Color.Red)
             }
         }
     }
 }
 
+// --- CERTIFIQUE-SE DE QUE ESTA FUNÇÃO ESTÁ NO FINAL DO ARQUIVO ---
 @Composable
 fun InfoCard(label: String, value: String) {
     Card(

@@ -17,14 +17,22 @@ interface PatasUnidasApi {
     @POST("/user/register-new-user")
     suspend fun register(@Body request: RegisterRequest): Response<Void>
 
+    // NOVO: Busca dados públicos de um usuário (para o card do criador)
+    @GET("/user/{id}")
+    suspend fun getUserById(@Path("id") id: Long): Response<UserResponse>
+
     // --- ANIMAL ---
     @POST("/animalprofile/register-animal-profile")
     suspend fun createAnimal(@Body request: CreateAnimalRequest): Response<Void>
 
+    // ATUALIZADO: Agora recebe lat/long para calcular a proximidade na tela de detalhes
     @GET("/animalprofile/{id}")
-    suspend fun getAnimalById(@Path("id") id: Long): Response<AnimalResponse>
+    suspend fun getAnimalById(
+        @Path("id") id: Long,
+        @Query("latitude") latitude: Double? = null,
+        @Query("longitude") longitude: Double? = null
+    ): Response<AnimalResponse>
 
-    // Endpoint atualizado para "/proximos" conforme solicitado
     @GET("/animalprofile/proximos")
     suspend fun getNearbyAnimals(
         @Query("latitude") latitude: Double,
