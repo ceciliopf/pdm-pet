@@ -1,17 +1,17 @@
 package com.example.pdm_pet.features.auth
-import android.app.Application
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pdm_pet.data.remote.RetrofitClient
 import com.example.pdm_pet.data.remote.dto.LoginRequest
 import com.example.pdm_pet.data.remote.dto.RegisterRequest
-import com.example.pdm_pet.utils.TokenManager
+import com.example.pdm_pet.utils.UserSession
 import kotlinx.coroutines.launch
 
-// --- ESTADO PARA A TELA DE LOGIN ---
+// --- ESTADOS DE UI ---
 data class LoginUiState(
     val username: String = "",
     val password: String = "",
@@ -19,7 +19,6 @@ data class LoginUiState(
     val error: String? = null
 )
 
-// --- ESTADO PARA A TELA DE CADASTRO ---
 data class RegisterUiState(
     val name: String = "",
     val email: String = "",
@@ -31,9 +30,9 @@ data class RegisterUiState(
     val error: String? = null
 )
 
-class AuthViewModel(application: Application) : AndroidViewModel(application) {
+class AuthViewModel : ViewModel() {
 
-    // --- ESTADO E LÓGICA DE LOGIN (O que está faltando) ---
+    // ================= LOGIN =================
     var loginUiState by mutableStateOf(LoginUiState())
         private set
 
@@ -52,46 +51,44 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             loginUiState = loginUiState.copy(isLoading = true, error = null)
 
             try {
-                // 1. Criar o objeto de requisição
                 val request = LoginRequest(
                     email = loginUiState.username,
                     senha = loginUiState.password
                 )
 
-                // 2. Chamar sua API Spring Boot
                 val response = RetrofitClient.api.login(request)
 
                 if (response.isSuccessful && response.body() != null) {
                     val authData = response.body()!!
-                    println("Login Sucesso! Token: ${authData.token}")
 
-                    TokenManager.saveToken(context = getApplication(), token = authData.token)
+                    // 1. Salva o usuário na Sessão (Memória) para usar o ID depois
+                    UserSession.setLoggedInUser(authData)
 
-                    // 2. Log para confirmar (opcional)
-                    println("Login Sucesso: Token salvo!")
+                    // Nota: Aqui você também poderia salvar o token no SharedPreferences (TokenManager)
+                    // TokenManager.saveToken(context, authData.token)
+
+                    println("Login Sucesso: ${authData.name} (ID: ${authData.id})")
+
+                    // Limpa estado de erro/loading e o Compose vai reagir (navegação deve ser feita na UI)
                     loginUiState = loginUiState.copy(isLoading = false, error = null)
-                    // TODO: Disparar navegação para o Feed (onLoginSuccess)
 
                 } else {
-                    // Erro 403, 404, 500...
-                    loginUiState = loginUiState.copy(
-                        isLoading = false,
-                        error = "Erro no login: Código ${response.code()}"
-                    )
+                    val msg = if (response.code() == 403) "Credenciais inválidas" else "Erro: ${response.code()}"
+                    loginUiState = loginUiState.copy(isLoading = false, error = msg)
                 }
 
             } catch (e: Exception) {
-                // Erro de conexão (servidor desligado, sem internet)
                 loginUiState = loginUiState.copy(
                     isLoading = false,
-                    error = "Falha na conexão: ${e.message}"
+                    error = "Falha na conexão. Verifique a internet."
                 )
+                e.printStackTrace()
             }
         }
     }
 
 
-    // --- ESTADO E LÓGICA PARA CADASTRO ---
+    // ================= CADASTRO (REGISTER) =================
     var registerUiState by mutableStateOf(RegisterUiState())
         private set
 
@@ -117,8 +114,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun register() {
         if (registerUiState.isLoading) return
 
+        // Validações locais
         if (registerUiState.password != registerUiState.confirmPassword) {
             registerUiState = registerUiState.copy(error = "As senhas não conferem.")
+            return
+        }
+        if (registerUiState.name.isBlank() || registerUiState.email.isBlank()) {
+            registerUiState = registerUiState.copy(error = "Preencha todos os campos.")
             return
         }
 
@@ -126,44 +128,35 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             registerUiState = registerUiState.copy(isLoading = true, error = null)
 
             try {
-                // 1. Cria a requisição (Resolve o aviso de DTO não usado)
+                // Cria o DTO de registro
                 val request = RegisterRequest(
                     name = registerUiState.name,
                     email = registerUiState.email,
                     senha = registerUiState.password,
                     city = registerUiState.city,
                     state = registerUiState.state,
-                    userType = "COMMON" // Valor padrão
+                    userType = "COMMON" // Padrão
                 )
 
-                // 2. Chama a API (Resolve o aviso de função não usada na Api)
                 val response = RetrofitClient.api.register(request)
 
                 if (response.isSuccessful) {
-                    println("Usuário cadastrado com sucesso!")
-                    registerUiState = registerUiState.copy(isLoading = false)
-                    // Aqui você pode disparar um evento para navegar ao Login
+                    println("Cadastro realizado com sucesso!")
+                    registerUiState = registerUiState.copy(isLoading = false, error = null)
+                    // O sucesso é indicado pelo isLoading = false e error = null
                 } else {
-                    registerUiState = registerUiState.copy(
-                        isLoading = false,
-                        error = "Erro no cadastro: ${response.code()}"
-                    )
+                    // Tenta ler a mensagem de erro do corpo, se houver, ou usa código genérico
+                    val errorMsg = if(response.code() == 409) "E-mail já cadastrado" else "Erro no cadastro: ${response.code()}"
+                    registerUiState = registerUiState.copy(isLoading = false, error = errorMsg)
                 }
+
             } catch (e: Exception) {
                 registerUiState = registerUiState.copy(
                     isLoading = false,
-                    error = "Falha na conexão: ${e.message}"
+                    error = "Sem conexão com o servidor."
                 )
+                e.printStackTrace()
             }
-        }
-
-
-        viewModelScope.launch {
-            registerUiState = registerUiState.copy(isLoading = true, error = null)
-            kotlinx.coroutines.delay(2000) // Simula rede
-            println("Usuário ${registerUiState.name} cadastrado!")
-            registerUiState = registerUiState.copy(isLoading = false)
-            // TODO: Navegar para Login
         }
     }
 }

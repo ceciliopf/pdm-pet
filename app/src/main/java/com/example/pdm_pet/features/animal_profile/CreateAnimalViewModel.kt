@@ -7,10 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pdm_pet.data.remote.RetrofitClient
 import com.example.pdm_pet.data.remote.dto.CreateAnimalRequest
+import com.example.pdm_pet.utils.UserSession
 import kotlinx.coroutines.launch
 
 class CreateAnimalViewModel : ViewModel() {
 
+    // Estados para controlar a UI (Loading e Erros)
     var isLoading by mutableStateOf(false)
         private set
 
@@ -23,8 +25,13 @@ class CreateAnimalViewModel : ViewModel() {
         photos: List<String>,
         onSuccess: () -> Unit
     ) {
-        if (name.isBlank() || photos.isEmpty()) {
-            errorMessage = "Nome e pelo menos uma foto são obrigatórios."
+        // Validação básica
+        if (name.isBlank()) {
+            errorMessage = "O nome do pet é obrigatório."
+            return
+        }
+        if (photos.isEmpty()) {
+            errorMessage = "Adicione pelo menos uma foto."
             return
         }
 
@@ -33,34 +40,41 @@ class CreateAnimalViewModel : ViewModel() {
             errorMessage = null
 
             try {
-                // TODO: Em um app real, pegue o ID do usuário logado (ex: SharedPreferences ou DataStore)
-                // Por enquanto, vou fixar o ID 1 para testes
-                val userIdFixo = 1L
+                // 1. Pega o ID do usuário logado na Sessão
+                val userId = UserSession.userId
 
-                // TODO: Em um app real, pegue a localização do GPS
-                // Por enquanto, coordenadas fixas de Uberaba
-                val latFixa = -19.747
-                val lonFixa = -47.939
+                if (userId == 0L) {
+                    errorMessage = "Erro de sessão: Faça login novamente."
+                    isLoading = false
+                    return@launch
+                }
 
+                // 2. Cria o objeto de requisição
+                // Nota: Lat/Long fixos para teste. Num app real, use o FusedLocationProviderClient.
                 val request = CreateAnimalRequest(
                     provisionalName = name,
                     description = description,
                     photos = photos,
-                    createdByUserId = userIdFixo,
-                    latitude = latFixa,
-                    longitude = lonFixa
+                    createdByUserId = userId,
+                    latitude = -19.747, // Exemplo: Uberaba
+                    longitude = -47.939,
+                    status = "ON_STREET",
+                    sex = "UNKNOWN",
+                    size = "MEDIUM",
+                    approximateAge = "Desconhecida"
                 )
 
+                // 3. Chama a API
                 val response = RetrofitClient.api.createAnimal(request)
 
                 if (response.isSuccessful) {
-                    onSuccess()
+                    onSuccess() // Navega de volta
                 } else {
-                    errorMessage = "Erro ao salvar: ${response.code()}"
+                    errorMessage = "Erro ao salvar animal: Código ${response.code()}"
                 }
 
             } catch (e: Exception) {
-                errorMessage = "Erro de conexão: ${e.message}"
+                errorMessage = "Falha na conexão: ${e.message}"
                 e.printStackTrace()
             } finally {
                 isLoading = false

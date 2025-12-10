@@ -20,4 +20,8 @@ interface PatasUnidasApi {
     @POST("/animalprofile/register-animal-profile")
     suspend fun createAnimal(@Body request: CreateAnimalRequest): Response<Void>
     // (Vamos adicionar os de Animal depois que o login funcionar)
+
+    // NOVO: Busca os animais recentes
+    @GET("/animalprofile/get-recent")
+    suspend fun getRecentAnimals(): Response<List<AnimalResponse>>
 }
