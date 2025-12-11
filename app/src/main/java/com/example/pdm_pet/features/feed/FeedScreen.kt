@@ -108,7 +108,7 @@ fun FeedScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Adote um Amigo",
+                        text = "Adote um Aumigo",
                         fontWeight = FontWeight.Bold,
                         color = caramelColor
                     )

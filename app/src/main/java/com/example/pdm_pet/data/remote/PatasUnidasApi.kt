@@ -5,6 +5,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -49,7 +50,7 @@ interface PatasUnidasApi {
     suspend fun getUserDetails(@Path("id") id: Long): Response<UserResponse>
 
     // Atualizar foto de perfil
-    @POST("/user/{id}/update-photo") // Ou PUT, dependendo do seu backend
+    @PATCH("/user/{id}/update-photo")
     suspend fun updateUserPhoto(
         @Path("id") id: Long,
         @Body request: UpdatePhotoRequest
@@ -59,7 +60,7 @@ interface PatasUnidasApi {
     @POST("/user/{id}/remove-photo") // Ou DELETE
     suspend fun deleteUserPhoto(@Path("id") id: Long): Response<Void>
 
-    @PUT("/animalprofile/alter-{id}")
+    @PATCH("/animalprofile/alter-{id}")
     suspend fun updateAnimal(
         @Path("id") id: Long,
         @Body request: CreateAnimalRequest
