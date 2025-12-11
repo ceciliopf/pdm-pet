@@ -1,12 +1,15 @@
 package com.example.pdm_pet.features.animal_profile
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Base64
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -30,10 +33,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.pdm_pet.ui.theme.caramelColor
+import com.google.android.gms.location.LocationServices
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
@@ -103,6 +108,60 @@ fun CreateAnimalScreen(
 ) {
     val context = LocalContext.current
 
+    // --- CONFIGURAÇÃO DE LOCALIZAÇÃO (GPS) ---
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    var currentLat by remember { mutableDoubleStateOf(0.0) }
+    var currentLong by remember { mutableDoubleStateOf(0.0) }
+
+    // Função auxiliar para obter localização se tiver permissão
+    fun getCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    currentLat = location.latitude
+                    currentLong = location.longitude
+                }
+            }
+        }
+    }
+
+    // Launcher para pedir permissão de GPS
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineLocation = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocation = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+        if (fineLocation || coarseLocation) {
+            getCurrentLocation()
+        } else {
+            Toast.makeText(context, "Permissão de localização necessária para registrar o pet.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // Pede permissão/localização ao abrir a tela
+    LaunchedEffect(Unit) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        } else {
+            getCurrentLocation()
+        }
+    }
+
     // --- ESTADOS DO FORMULÁRIO ---
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -128,7 +187,7 @@ fun CreateAnimalScreen(
     var showImageSourceDialog by remember { mutableStateOf(false) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
-    // --- LAUNCHERS ---
+    // --- LAUNCHERS DE IMAGEM ---
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -231,6 +290,23 @@ fun CreateAnimalScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Exibir Coordenadas (Debug/Info para o utilizador saber se pegou o GPS)
+            if (currentLat != 0.0 && currentLong != 0.0) {
+                Text(
+                    text = "Localização capturada: $currentLat, $currentLong",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            } else {
+                Text(
+                    text = "Aguardando localização...",
+                    fontSize = 12.sp,
+                    color = Color.Red
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             if (viewModel.errorMessage != null) {
                 Text(viewModel.errorMessage!!, color = Color.Red, fontSize = 14.sp)
             }
@@ -238,6 +314,15 @@ fun CreateAnimalScreen(
             // BOTÃO SALVAR
             Button(
                 onClick = {
+                    // Tenta atualizar a localização se ainda estiver zerada
+                    if (currentLat == 0.0 && currentLong == 0.0) {
+                        getCurrentLocation()
+                        if (currentLat == 0.0) {
+                            Toast.makeText(context, "Aguarde a captura do GPS...", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                    }
+
                     val photosList = ArrayList<String>()
                     photoBitmap?.let { photosList.add(bitmapToBase64(it)) }
 
@@ -246,6 +331,7 @@ fun CreateAnimalScreen(
                     val apiSize = sizeOptions.find { it.first == selectedSize }?.second ?: "MEDIUM"
                     val apiStatus = statusOptions.find { it.first == selectedStatus }?.second ?: "ON_STREET"
 
+                    // Chama o ViewModel passando as coordenadas reais
                     viewModel.createAnimal(
                         name = name,
                         description = description,
@@ -254,6 +340,8 @@ fun CreateAnimalScreen(
                         sex = apiSex,
                         size = apiSize,
                         status = apiStatus,
+                        latitude = currentLat,  // <--- VALOR DO GPS
+                        longitude = currentLong, // <--- VALOR DO GPS
                         onSuccess = { onNavigateBack() }
                     )
                 },

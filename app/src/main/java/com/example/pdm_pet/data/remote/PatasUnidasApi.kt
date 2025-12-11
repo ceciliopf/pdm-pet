@@ -57,7 +57,7 @@ interface PatasUnidasApi {
     ): Response<Void>
 
     // Remover foto de perfil
-    @DELETE("/user/{id}/remove-photo") // Ou DELETE
+    @DELETE("/user/{id}/delete-photo") // Ou DELETE
     suspend fun deleteUserPhoto(@Path("id") id: Long): Response<Void>
 
     @PATCH("/animalprofile/alter-{id}")

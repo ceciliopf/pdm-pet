@@ -26,6 +26,8 @@ class CreateAnimalViewModel : ViewModel() {
         sex: String,
         size: String,
         status: String,
+        latitude: Double,   // <--- NOVO PARÂMETRO
+        longitude: Double,  // <--- NOVO PARÂMETRO
         onSuccess: () -> Unit
     ) {
         if (name.isBlank()) {
@@ -55,12 +57,11 @@ class CreateAnimalViewModel : ViewModel() {
                     approximateAge = if(age.isBlank()) "Desconhecida" else age,
                     photos = photos,
                     createdByUserId = userId,
-                    latitude = -19.747, // Mantenha fixo ou implemente GPS
-                    longitude = -47.939,
+                    latitude = latitude,  // <--- Usa o valor recebido
+                    longitude = longitude, // <--- Usa o valor recebido
                     status = status,
                     sex = sex,
                     size = size,
-                    // O campo createdAt agora é preenchido automaticamente com o valor padrão do DTO
                 )
 
                 val response = RetrofitClient.api.createAnimal(request)
