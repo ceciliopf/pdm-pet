@@ -41,7 +41,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// --- Funções Utilitárias para Imagem ---
 private fun createTempImageFile(context: Context): Uri {
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val storageDir = context.externalCacheDir
@@ -67,12 +66,18 @@ fun RegisterScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
+    // --- OBSERVADOR DE SUCESSO (A Mágica acontece aqui) ---
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onNavigateToLogin() // Volta para o login automaticamente
+        }
+    }
+
     // --- ESTADOS DA FOTO ---
     var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     var showImageSourceDialog by remember { mutableStateOf(false) }
 
-    // Lançador Galeria
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             val bitmap = loadBitmapFromUri(context, it)
@@ -81,7 +86,6 @@ fun RegisterScreen(
         }
     }
 
-    // Lançador Câmera
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && tempCameraUri != null) {
             val bitmap = loadBitmapFromUri(context, tempCameraUri!!)
@@ -89,11 +93,6 @@ fun RegisterScreen(
             authViewModel.onPhotoSelected(bitmap)
         }
     }
-
-    // Se o cadastro foi bem sucedido (erro nulo e loading parou, mas idealmente teríamos um flag isSuccess)
-    // Para simplificar, vamos verificar se o erro é nulo após clicar em registrar?
-    // O ideal seria o ViewModel ter um 'isSuccess' igual no Login.
-    // Por enquanto, o usuário clica em "Já tem conta" ou podemos adicionar um LaunchedEffect se adicionarmos isSuccess no RegisterUiState.
 
     Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
         Column(
@@ -109,7 +108,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- FOTO DE PERFIL ---
+            // FOTO DE PERFIL
             Box(
                 modifier = Modifier
                     .size(120.dp)
@@ -133,9 +132,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- FORMULÁRIO ---
-
-            // Nome
+            // FORMULÁRIO
             OutlinedTextField(
                 value = uiState.name, onValueChange = { authViewModel.onNameChange(it) },
                 label = { Text("Nome Completo") },
@@ -144,7 +141,6 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Email
             OutlinedTextField(
                 value = uiState.email, onValueChange = { authViewModel.onEmailChange(it) },
                 label = { Text("E-mail") },
@@ -154,7 +150,6 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Telefone (WhatsApp)
             OutlinedTextField(
                 value = uiState.phone, onValueChange = { authViewModel.onPhoneChange(it) },
                 label = { Text("WhatsApp (com DDD)") },
@@ -165,7 +160,6 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Cidade
             OutlinedTextField(
                 value = uiState.city, onValueChange = { authViewModel.onCityChange(it) },
                 label = { Text("Cidade") },
@@ -174,7 +168,6 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Estado
             OutlinedTextField(
                 value = uiState.state, onValueChange = { authViewModel.onStateChange(it) },
                 label = { Text("Estado") },
@@ -183,7 +176,6 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Senha
             OutlinedTextField(
                 value = uiState.password, onValueChange = { authViewModel.onRegisterPasswordChange(it) },
                 label = { Text("Senha") },
@@ -194,7 +186,6 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Confirmar Senha
             OutlinedTextField(
                 value = uiState.confirmPassword, onValueChange = { authViewModel.onConfirmPasswordChange(it) },
                 label = { Text("Confirmar Senha") },
@@ -204,23 +195,16 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Mensagem de Erro
             if (uiState.error != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = uiState.error, color = Color.Red, fontSize = 14.sp)
-            } else if (!uiState.isLoading && uiState.name.isNotBlank() && !authViewModel.registerUiState.isLoading) {
-                // Dica: Poderíamos verificar sucesso aqui, mas por simplicidade mostramos só o erro
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
             // Botão Cadastrar
             Button(
-                onClick = {
-                    authViewModel.register()
-                    // Se quiser navegar automaticamente ao clicar e não houver erro imediato (melhor seria observar um estado isSuccess)
-                    // onNavigateToLogin() <--- Não coloque aqui direto, espere o sucesso.
-                },
+                onClick = { authViewModel.register() },
                 enabled = !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(8.dp),
@@ -241,7 +225,6 @@ fun RegisterScreen(
         }
     }
 
-    // --- DIALOG ESCOLHA DE FOTO ---
     if (showImageSourceDialog) {
         AlertDialog(
             onDismissRequest = { showImageSourceDialog = false },

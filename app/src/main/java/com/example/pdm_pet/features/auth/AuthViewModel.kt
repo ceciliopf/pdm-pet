@@ -32,7 +32,8 @@ data class RegisterUiState(
     val state: String = "",
     val photoBase64: String? = null,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val isSuccess: Boolean = false // <--- NOVO CAMPO
 )
 
 class AuthViewModel : ViewModel() {
@@ -94,7 +95,6 @@ class AuthViewModel : ViewModel() {
     fun register() {
         if (registerUiState.isLoading) return
 
-        // Validações
         if (registerUiState.name.isBlank() || registerUiState.email.isBlank()) {
             registerUiState = registerUiState.copy(error = "Preencha todos os campos.")
             return
@@ -109,21 +109,21 @@ class AuthViewModel : ViewModel() {
         }
 
         viewModelScope.launch {
-            registerUiState = registerUiState.copy(isLoading = true, error = null)
-            try {
-                // 1. CHECAGEM DE E-MAIL: Verifica se o e-mail já existe na base
-                val checkEmailResponse = RetrofitClient.api.checkEmail(registerUiState.email)
+            // Reseta o estado antes de começar (importante resetar o isSuccess também)
+            registerUiState = registerUiState.copy(isLoading = true, error = null, isSuccess = false)
 
-                // Se a API retornar true, significa que o e-mail já está cadastrado
+            try {
+                // 1. Checa E-mail
+                val checkEmailResponse = RetrofitClient.api.checkEmail(registerUiState.email)
                 if (checkEmailResponse.isSuccessful && checkEmailResponse.body() == true) {
                     registerUiState = registerUiState.copy(
                         isLoading = false,
-                        error = "Este e-mail já está em uso por outro usuário."
+                        error = "Este e-mail já está em uso."
                     )
                     return@launch
                 }
 
-                // 2. SE O E-MAIL ESTIVER LIVRE, SEGUE COM O CADASTRO
+                // 2. Faz Cadastro
                 val req = RegisterRequest(
                     name = registerUiState.name,
                     email = registerUiState.email,
@@ -138,14 +138,13 @@ class AuthViewModel : ViewModel() {
                 val resp = RetrofitClient.api.register(req)
 
                 if (resp.isSuccessful) {
-                    registerUiState = registerUiState.copy(isLoading = false, error = null)
-                    // Sucesso: A UI vai notar o erro == null e pode navegar
+                    // SUCESSO! Ativa a flag para a tela perceber
+                    registerUiState = registerUiState.copy(isLoading = false, error = null, isSuccess = true)
                 } else {
-                    registerUiState = registerUiState.copy(isLoading = false, error = "Erro no cadastro: ${resp.code()}")
+                    registerUiState = registerUiState.copy(isLoading = false, error = "Erro: ${resp.code()}")
                 }
             } catch (e: Exception) {
-                registerUiState = registerUiState.copy(isLoading = false, error = "Erro técnico: ${e.message}")
-                e.printStackTrace()
+                registerUiState = registerUiState.copy(isLoading = false, error = e.message)
             }
         }
     }

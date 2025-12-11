@@ -49,7 +49,7 @@ interface PatasUnidasApi {
     suspend fun getUserDetails(@Path("id") id: Long): Response<UserResponse>
 
     // Atualizar foto de perfil
-    @POST("/animal/{id}/update-photo") // Ou PUT, dependendo do seu backend
+    @POST("/user/{id}/update-photo") // Ou PUT, dependendo do seu backend
     suspend fun updateUserPhoto(
         @Path("id") id: Long,
         @Body request: UpdatePhotoRequest
