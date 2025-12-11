@@ -21,19 +21,24 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pdm_pet.R
 import com.example.pdm_pet.ui.theme.caramelColor
-
+import com.example.pdm_pet.utils.UserSession
+import androidx.compose.ui.platform.LocalContext
 @Composable
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToHome: () -> Unit, // Certifique-se que este parâmetro existe!
     viewModel: AuthViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState = viewModel.loginUiState
 
     // --- OBSERVADOR DE SUCESSO ---
     // Assim que 'isSuccess' virar true, este bloco é executado
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
+            UserSession.currentUser?.let { user ->
+                UserSession.login(context, user)
+            }
             onNavigateToHome()
         }
     }

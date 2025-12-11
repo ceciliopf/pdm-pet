@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.pdm_pet.data.remote.RetrofitClient
 import com.example.pdm_pet.data.remote.dto.AnimalResponse
 import com.example.pdm_pet.data.remote.dto.UserResponse
+import com.example.pdm_pet.utils.UserSession
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -19,7 +20,6 @@ class AnimalDetailsViewModel : ViewModel() {
     var animal by mutableStateOf<AnimalResponse?>(null)
         private set
 
-    // Estado para guardar o "Dono" do post
     var creatorUser by mutableStateOf<UserResponse?>(null)
         private set
 
@@ -29,8 +29,13 @@ class AnimalDetailsViewModel : ViewModel() {
     var errorMsg by mutableStateOf<String?>(null)
         private set
 
+    // Verifica se o usuário logado é o dono do post
+    val isOwner: Boolean
+        get() = animal?.createdByUserId == UserSession.userId
+
+    // URLs base (Ajuste conforme seu servidor)
     private val BASE_IMAGE_URL = "https://patas-unidas-api.onrender.com/animalprofile/image/"
-    private val BASE_USER_IMAGE_URL = "https://patas-unidas-api.onrender.com/user/image/" // Ajuste se for diferente
+    private val BASE_USER_IMAGE_URL = "https://patas-unidas-api.onrender.com/user/image/"
 
     @SuppressLint("MissingPermission")
     fun loadAnimal(context: Context, id: Long) {
@@ -39,13 +44,13 @@ class AnimalDetailsViewModel : ViewModel() {
                 isLoading = true
                 errorMsg = null
 
-                // 1. Tenta pegar o GPS atual para calcular a distância
+                // 1. Tenta pegar GPS para calcular distância
                 val fusedLocation = LocationServices.getFusedLocationProviderClient(context)
                 val location = try {
                     fusedLocation.lastLocation.await()
                 } catch (e: Exception) { null }
 
-                // 2. Busca o Animal (enviando Lat/Long se tiver)
+                // 2. Busca Animal
                 val response = RetrofitClient.api.getAnimalById(
                     id = id,
                     latitude = location?.latitude,
@@ -55,19 +60,15 @@ class AnimalDetailsViewModel : ViewModel() {
                 if (response.isSuccessful && response.body() != null) {
                     val loadedAnimal = response.body()!!
                     animal = loadedAnimal
-
-                    // 3. AGORA BUSCA O USUÁRIO CRIADOR
+                    // 3. Busca Criador
                     fetchCreatorInfo(loadedAnimal.createdByUserId)
-
                 } else {
                     errorMsg = "Erro na API: ${response.code()}"
+                    isLoading = false // Se falhar aqui, encerra
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
                 errorMsg = "Erro técnico: ${e.message}"
-            } finally {
-                // Só para o loading se der erro no animal. Se der certo, espera carregar o user (opcional)
-                if (animal == null) isLoading = false
+                isLoading = false
             }
         }
     }
@@ -82,7 +83,26 @@ class AnimalDetailsViewModel : ViewModel() {
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                isLoading = false // Finaliza o loading geral
+                isLoading = false
+            }
+        }
+    }
+
+    fun deleteAnimal(onSuccess: () -> Unit) {
+        val id = animal?.id ?: return
+        viewModelScope.launch {
+            isLoading = true
+            try {
+                val response = RetrofitClient.api.deleteAnimal(id)
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    errorMsg = "Erro ao deletar: ${response.code()}"
+                }
+            } catch (e: Exception) {
+                errorMsg = "Erro: ${e.message}"
+            } finally {
+                isLoading = false
             }
         }
     }

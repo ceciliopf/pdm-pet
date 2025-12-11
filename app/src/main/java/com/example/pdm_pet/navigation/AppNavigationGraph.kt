@@ -1,6 +1,7 @@
 package com.example.pdm_pet.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -8,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.pdm_pet.features.animal_profile.AnimalDetailsScreen
 import com.example.pdm_pet.features.animal_profile.CreateAnimalScreen
+import com.example.pdm_pet.features.animal_profile.EditAnimalScreen
 import com.example.pdm_pet.features.auth.LoginScreen
 import com.example.pdm_pet.features.auth.RegisterScreen
 import com.example.pdm_pet.features.feed.FeedScreen
@@ -17,17 +19,18 @@ import com.example.pdm_pet.utils.UserSession
 @Composable
 fun AppNavigationGraph() {
     val navController = rememberNavController()
+    val context = LocalContext.current
 
-    NavHost(navController = navController, startDestination = "login") {
+    // Decide onde começar baseada se já existe login salvo
+    val startRoute = if (UserSession.isLoggedIn) "feed" else "login"
 
-        // --- TELA DE LOGIN ---
+    NavHost(navController = navController, startDestination = startRoute) {
+
+        // --- LOGIN ---
         composable("login") {
             LoginScreen(
-                onNavigateToRegister = {
-                    navController.navigate("register")
-                },
+                onNavigateToRegister = { navController.navigate("register") },
                 onNavigateToHome = {
-                    // Vai para o Feed e remove o Login da pilha (para não voltar ao login se apertar 'Voltar')
                     navController.navigate("feed") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -35,57 +38,43 @@ fun AppNavigationGraph() {
             )
         }
 
-        // --- TELA DE CADASTRO ---
+        // --- REGISTER ---
         composable("register") {
             RegisterScreen(
-                onNavigateToLogin = {
-                    // Volta para a tela anterior (Login)
-                    navController.popBackStack()
-                }
+                onNavigateToLogin = { navController.popBackStack() }
             )
         }
 
-        // --- TELA DE FEED (HOME) ---
+        // --- FEED ---
         composable("feed") {
             FeedScreen(
-                onNavigateToCreateAnimal = {
-                    navController.navigate("create_animal")
-                },
-                onNavigateToDetails = { animalId ->
-                    navController.navigate("details/$animalId")
-                },
-                onNavigateToProfile = {
-                    navController.navigate("profile")
-                }
+                onNavigateToCreateAnimal = { navController.navigate("create_animal") },
+                onNavigateToDetails = { id -> navController.navigate("details/$id") },
+                onNavigateToProfile = { navController.navigate("profile") }
             )
         }
 
-        // --- TELA DE PERFIL ---
+        // --- PERFIL ---
         composable("profile") {
             ProfileScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
+                onNavigateBack = { navController.popBackStack() },
                 onLogout = {
-                    UserSession.logout() // Limpa o token da sessão
-                    // Volta para o Login e limpa toda a pilha de telas
+                    UserSession.logout(context) // Limpa sessão do disco
                     navController.navigate("login") {
-                        popUpTo(0) { inclusive = true }
+                        popUpTo(0) { inclusive = true } // Limpa pilha
                     }
                 }
             )
         }
 
-        // --- TELA DE CRIAR ANIMAL ---
+        // --- CRIAR ANIMAL ---
         composable("create_animal") {
             CreateAnimalScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        // --- TELA DE DETALHES DO ANIMAL ---
+        // --- DETALHES DO ANIMAL ---
         composable(
             route = "details/{animalId}",
             arguments = listOf(navArgument("animalId") { type = NavType.StringType })
@@ -93,9 +82,20 @@ fun AppNavigationGraph() {
             val animalId = backStackEntry.arguments?.getString("animalId") ?: "0"
             AnimalDetailsScreen(
                 animalId = animalId,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEdit = { id -> navController.navigate("edit_animal/$id") }
+            )
+        }
+
+        // --- EDITAR ANIMAL (ROTA NOVA) ---
+        composable(
+            route = "edit_animal/{animalId}",
+            arguments = listOf(navArgument("animalId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val animalId = backStackEntry.arguments?.getString("animalId") ?: "0"
+            EditAnimalScreen(
+                animalId = animalId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

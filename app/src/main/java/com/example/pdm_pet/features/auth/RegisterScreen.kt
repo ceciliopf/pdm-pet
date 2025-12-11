@@ -41,7 +41,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// Funções Utilitárias Locais
+// --- Funções Utilitárias para Imagem ---
 private fun createTempImageFile(context: Context): Uri {
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val storageDir = context.externalCacheDir
@@ -67,11 +67,12 @@ fun RegisterScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    // Estados para Imagem
+    // --- ESTADOS DA FOTO ---
     var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     var showImageSourceDialog by remember { mutableStateOf(false) }
 
+    // Lançador Galeria
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             val bitmap = loadBitmapFromUri(context, it)
@@ -80,6 +81,7 @@ fun RegisterScreen(
         }
     }
 
+    // Lançador Câmera
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && tempCameraUri != null) {
             val bitmap = loadBitmapFromUri(context, tempCameraUri!!)
@@ -88,11 +90,16 @@ fun RegisterScreen(
         }
     }
 
+    // Se o cadastro foi bem sucedido (erro nulo e loading parou, mas idealmente teríamos um flag isSuccess)
+    // Para simplificar, vamos verificar se o erro é nulo após clicar em registrar?
+    // O ideal seria o ViewModel ter um 'isSuccess' igual no Login.
+    // Por enquanto, o usuário clica em "Já tem conta" ou podemos adicionar um LaunchedEffect se adicionarmos isSuccess no RegisterUiState.
+
     Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState) // Habilita rolagem para telas pequenas
+                .verticalScroll(scrollState)
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -102,7 +109,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- CAMPO DE FOTO DE PERFIL ---
+            // --- FOTO DE PERFIL ---
             Box(
                 modifier = Modifier
                     .size(120.dp)
@@ -114,24 +121,21 @@ fun RegisterScreen(
                 if (photoBitmap != null) {
                     Image(
                         bitmap = photoBitmap!!.asImageBitmap(),
-                        contentDescription = "Foto de Perfil",
+                        contentDescription = "Foto",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Adicionar Foto",
-                        tint = Color.White,
-                        modifier = Modifier.size(40.dp)
-                    )
+                    Icon(Icons.Default.CameraAlt, null, tint = Color.White, modifier = Modifier.size(40.dp))
                 }
             }
-            Text("Toque para adicionar foto", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(top = 8.dp))
+            Text("Adicionar foto", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(top = 8.dp))
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // CAMPOS DE TEXTO
+            // --- FORMULÁRIO ---
+
+            // Nome
             OutlinedTextField(
                 value = uiState.name, onValueChange = { authViewModel.onNameChange(it) },
                 label = { Text("Nome Completo") },
@@ -139,13 +143,29 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Email
             OutlinedTextField(
                 value = uiState.email, onValueChange = { authViewModel.onEmailChange(it) },
                 label = { Text("E-mail") },
                 leadingIcon = { Icon(Icons.Filled.Email, null, tint = caramelColor) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Telefone (WhatsApp)
+            OutlinedTextField(
+                value = uiState.phone, onValueChange = { authViewModel.onPhoneChange(it) },
+                label = { Text("WhatsApp (com DDD)") },
+                placeholder = { Text("Ex: 34999998888") },
+                leadingIcon = { Icon(Icons.Filled.Phone, null, tint = caramelColor) },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Cidade
             OutlinedTextField(
                 value = uiState.city, onValueChange = { authViewModel.onCityChange(it) },
                 label = { Text("Cidade") },
@@ -153,6 +173,8 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Estado
             OutlinedTextField(
                 value = uiState.state, onValueChange = { authViewModel.onStateChange(it) },
                 label = { Text("Estado") },
@@ -160,6 +182,8 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Senha
             OutlinedTextField(
                 value = uiState.password, onValueChange = { authViewModel.onRegisterPasswordChange(it) },
                 label = { Text("Senha") },
@@ -169,6 +193,8 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Confirmar Senha
             OutlinedTextField(
                 value = uiState.confirmPassword, onValueChange = { authViewModel.onConfirmPasswordChange(it) },
                 label = { Text("Confirmar Senha") },
@@ -178,15 +204,23 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Mensagem de Erro
             if (uiState.error != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = uiState.error, color = Color.Red, fontSize = 14.sp)
+            } else if (!uiState.isLoading && uiState.name.isNotBlank() && !authViewModel.registerUiState.isLoading) {
+                // Dica: Poderíamos verificar sucesso aqui, mas por simplicidade mostramos só o erro
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Botão Cadastrar
             Button(
-                onClick = { authViewModel.register() },
+                onClick = {
+                    authViewModel.register()
+                    // Se quiser navegar automaticamente ao clicar e não houver erro imediato (melhor seria observar um estado isSuccess)
+                    // onNavigateToLogin() <--- Não coloque aqui direto, espere o sucesso.
+                },
                 enabled = !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(8.dp),
@@ -199,17 +233,19 @@ fun RegisterScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
             TextButton(onClick = { onNavigateToLogin() }) {
                 Text("Já tem uma conta? Entre", color = caramelColor)
             }
         }
     }
 
-    // Dialog de Escolha (Câmera ou Galeria)
+    // --- DIALOG ESCOLHA DE FOTO ---
     if (showImageSourceDialog) {
         AlertDialog(
             onDismissRequest = { showImageSourceDialog = false },
-            title = { Text("Escolher Foto de Perfil") },
+            title = { Text("Escolher Foto") },
             text = { Text("Selecione a origem:") },
             confirmButton = {
                 TextButton(onClick = {

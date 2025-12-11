@@ -3,8 +3,10 @@ package com.example.pdm_pet.data.remote
 import com.example.pdm_pet.data.remote.dto.*
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -33,6 +35,8 @@ interface PatasUnidasApi {
         @Query("longitude") longitude: Double? = null
     ): Response<AnimalResponse>
 
+    @GET("/user/check-email")
+    suspend fun checkEmail(@Query("email") email: String): Response<Boolean>
     @GET("/animalprofile/proximos")
     suspend fun getNearbyAnimals(
         @Query("latitude") latitude: Double,
@@ -45,7 +49,7 @@ interface PatasUnidasApi {
     suspend fun getUserDetails(@Path("id") id: Long): Response<UserResponse>
 
     // Atualizar foto de perfil
-    @POST("/user/{id}/update-photo") // Ou PUT, dependendo do seu backend
+    @POST("/animal/{id}/update-photo") // Ou PUT, dependendo do seu backend
     suspend fun updateUserPhoto(
         @Path("id") id: Long,
         @Body request: UpdatePhotoRequest
@@ -55,4 +59,14 @@ interface PatasUnidasApi {
     @POST("/user/{id}/remove-photo") // Ou DELETE
     suspend fun deleteUserPhoto(@Path("id") id: Long): Response<Void>
 
+    @PUT("/animalprofile/alter-{id}")
+    suspend fun updateAnimal(
+        @Path("id") id: Long,
+        @Body request: CreateAnimalRequest
+    ): Response<Void>
+
+    // Deletar animal
+    @DELETE("/animalprofile/delete-{id}")
+    suspend fun deleteAnimal(@Path("id") id: Long): Response<Void>
+    
 }
