@@ -155,52 +155,57 @@ fun FeedScreen(
         containerColor = Color(0xFFF5F5F5) // Fundo cinza claro
     ) { paddingValues ->
 
-        if (animals.isEmpty()) {
-            // ESTADO DE LISTA VAZIA OU CARREGANDO
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (feedViewModel.isLoading) {
-                        CircularProgressIndicator(color = caramelColor)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Buscando amigos próximos...", color = Color.Gray)
-                    } else {
-                        Text(
-                            text = feedViewModel.errorMsg ?: "Nenhum animal encontrado.",
-                            color = Color.Gray
+        // CORREÇÃO: Usamos um Box para gerenciar camadas (conteúdo vs loading)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // 1. Lógica de exibição da Lista
+            if (animals.isNotEmpty()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(animals) { animal ->
+                        AnimalCard(
+                            name = animal.name,
+                            description = animal.description,
+                            photoUrl = animal.photoUrl,
+                            location = animal.distance, // Mostra a distância formatada
+                            status = animal.status,
+                            gender = animal.gender,
+                            onAdoptClick = {
+                                onNavigateToDetails(animal.id.toString())
+                            }
                         )
                     }
+                }
+            }
+            // 2. Estado Vazio ou Erro (só mostra se NÃO estiver carregando e lista vazia)
+            else if (!feedViewModel.isLoading) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = feedViewModel.errorMsg ?: "Nenhum animal encontrado.",
+                        color = Color.Gray
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(text = "GPS: $locationStatus", fontSize = 12.sp, color = Color.LightGray)
                 }
             }
-        } else {
-            // LISTA DE ANIMAIS
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(animals) { animal ->
-                    AnimalCard(
-                        name = animal.name,
-                        description = animal.description,
-                        photoUrl = animal.photoUrl,
-                        location = animal.distance, // Mostra a distância formatada (ex: "2.5 km")
-                        status = animal.status,
-                        gender = animal.gender,
-                        onAdoptClick = {
-                            onNavigateToDetails(animal.id.toString())
-                        }
-                    )
-                }
+
+            // 3. Indicador de Carregamento (Loading)
+            // Fica por cima de tudo quando isLoading for true
+            if (feedViewModel.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = caramelColor
+                )
             }
         }
     }

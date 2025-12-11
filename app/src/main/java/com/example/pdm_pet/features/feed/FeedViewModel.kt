@@ -1,7 +1,10 @@
 package com.example.pdm_pet.features.feed
 
 import android.annotation.SuppressLint
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pdm_pet.data.remote.RetrofitClient
@@ -19,9 +22,12 @@ data class AnimalUiState(
 
 class FeedViewModel : ViewModel() {
 
+    // Lista reativa para os animais
     val animals = mutableStateListOf<AnimalUiState>()
-    var isLoading = false
-    var errorMsg: String? = null
+
+    // CORREÇÃO: Usar mutableStateOf para que a UI reaja às mudanças
+    var isLoading by mutableStateOf(false)
+    var errorMsg by mutableStateOf<String?>(null)
 
     // URL de imagem do servidor online
     private val BASE_IMAGE_URL = "https://patas-unidas-api.onrender.com/animalprofile/image/"
@@ -29,6 +35,7 @@ class FeedViewModel : ViewModel() {
     // Agora o fetchAnimals pede latitude e longitude
     @SuppressLint("DefaultLocale")
     fun fetchAnimals(latitude: Double, longitude: Double) {
+        // Evita chamadas duplicadas se já estiver a carregar
         if (isLoading) return
 
         viewModelScope.launch {
