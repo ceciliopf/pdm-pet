@@ -65,7 +65,8 @@ class ProfileViewModel : ViewModel() {
                 val base64String = Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
 
                 // 2. Envia para API
-                val request = UpdatePhotoRequest(photoBase64 = base64String)
+
+                val request = UpdatePhotoRequest(profilePictureUrl = base64String) // Mudou de photoBase64 para profilePictureUrl
                 val response = RetrofitClient.api.updateUserPhoto(userId, request)
 
                 if (response.isSuccessful) {

@@ -4,7 +4,7 @@ package com.example.pdm_pet.data.remote.dto
 data class CreateAnimalRequest(
     val provisionalName: String,
     val description: String,
-    val photos: List<String>,
+    val photos: List<String>?,
     val createdByUserId: Long,
     val latitude: Double,
     val longitude: Double,

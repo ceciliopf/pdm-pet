@@ -11,5 +11,5 @@ data class UserResponse(
     val userType: String?
 )
 data class UpdatePhotoRequest(
-    val photoBase64: String? // Pode ser null se for para limpar, ou a String da nova foto
+    val profilePictureUrl: String?
 )

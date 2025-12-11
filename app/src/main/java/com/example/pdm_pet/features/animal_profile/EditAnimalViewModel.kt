@@ -76,7 +76,7 @@ class EditAnimalViewModel : ViewModel() {
                 // OBS: A lógica exata de "manter foto antiga" depende do seu backend.
                 // Aqui vamos supor que se mandar lista vazia, ele mantém, ou enviamos a nova.
 
-                val photosList = if (photoBase64 != null) listOf(photoBase64!!) else emptyList()
+                val photosList = if (photoBase64 != null) listOf(photoBase64!!) else null
 
                 // Nota: O backend pode precisar de ajuste para não apagar a foto se a lista vier vazia no update.
                 // Ou você pode impedir a edição sem reenviar a foto por enquanto.
