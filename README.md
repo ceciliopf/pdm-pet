@@ -54,4 +54,4 @@ O sistema foi desenvolvido respeitando os seguintes princípios:
 * O catálogo de animais é acessível para visualização geral no feed.
 
 ---
-Desenvolvido por **ceciliopf**.
+Desenvolvido por **ceciliopf** e **bendopepsi**.
